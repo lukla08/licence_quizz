@@ -56,7 +56,12 @@ desktop.ini
 *.sln
 
 # from 10x-astro-starter
+# generated types
 .astro/
-.dev.vars
+
+# environment variables (cloudflare)
 .env.production
+
+# cloudflare
+.dev.vars
 .wrangler/

@@ -1,5 +1,5 @@
 ---
-bootstrapped_at: 2026-05-25T20:08:00Z
+bootstrapped_at: 2026-05-25T22:21:00Z
 starter_id: 10x-astro-starter
 starter_name: "10x Astro Starter (Astro + Supabase + Cloudflare)"
 project_name: licence-quizz
@@ -53,49 +53,64 @@ not yet battle-tested end-to-end in the bootstrapper.
 
 ## Pre-scaffold verification
 
-| Signal      | Value                                             | Severity | Notes                                              |
-| ----------- | ------------------------------------------------- | -------- | -------------------------------------------------- |
-| npm package | not run                                           | n/a      | cmd_template starts with `git clone`; npm step skipped |
-| GitHub repo | przeprogramowani/10x-astro-starter pushed 2026-05-17 | fresh    | from card.docs_url; within 3 months of 2026-05-25 |
+| Signal      | Value                                                   | Severity | Notes                                         |
+| ----------- | ------------------------------------------------------- | -------- | --------------------------------------------- |
+| npm package | not run                                                 | —        | cmd_template starts with `git clone`; no npm package to check |
+| GitHub repo | przeprogramowani/10x-astro-starter last pushed 2026-05-17 | fresh    | 8 days before bootstrap run; from card.docs_url |
 
 ## Scaffold log
 
 **Resolved invocation**: `git clone https://github.com/przeprogramowani/10x-astro-starter .bootstrap-scaffold && cd .bootstrap-scaffold && npm install`
-**Strategy**: git-clone (clone starter repo without keeping its git history)
+**Strategy**: git-clone (clone the starter repo without keeping its git history)
 **Exit code**: 0
-**Files moved**: 18 (`.env.example`, `.github/`, `.husky/`, `.nvmrc`, `.prettierrc.json`, `.vscode/`, `astro.config.mjs`, `components.json`, `eslint.config.js`, `node_modules/`, `package.json`, `package-lock.json`, `public/`, `README.md`, `src/`, `supabase/`, `tsconfig.json`, `wrangler.jsonc`)
-**Conflicts (.scaffold siblings)**: `CLAUDE.md` → `CLAUDE.md.scaffold`
-**.gitignore handling**: append-merged — 4 new patterns added from scaffold (`.astro/`, `.dev.vars`, `.env.production`, `.wrangler/`); existing cwd patterns preserved in order
-**.bootstrap-scaffold cleanup**: deleted
+**Files moved**: 16 files/directories moved silently into cwd
+**Conflicts (.scaffold siblings)**: `.vscode.scaffold/`, `CLAUDE.md.scaffold`
+**node_modules/ conflict**: existing wins; no `.scaffold` sibling created — impractical for 772-package directory. After scaffold, cwd has the starter's `package.json`; run `npm install` if dependency state is uncertain.
+**.gitignore handling**: append-merged — cwd lines preserved in order; scaffold-unique lines appended under `# from 10x-astro-starter` separator: `.astro/`, `.env.production`, `.dev.vars`, `.wrangler/`
+**.bootstrap-scaffold cleanup**: deleted (after `.git/` removal and conflict matrix applied)
+
+### Files moved silently
+
+`.env.example`, `.github/`, `.husky/`, `.nvmrc`, `.prettierrc.json`, `astro.config.mjs`, `components.json`, `eslint.config.js`, `package.json`, `package-lock.json`, `public/`, `README.md`, `src/`, `supabase/`, `tsconfig.json`, `wrangler.jsonc`
+
+### Conflict policy outcomes
+
+| File / Directory | Resolution                    |
+| ---------------- | ----------------------------- |
+| `.gitignore`     | append-merged                 |
+| `.vscode/`       | existing wins → `.vscode.scaffold/` sibling created |
+| `CLAUDE.md`      | existing wins → `CLAUDE.md.scaffold` sibling created |
+| `node_modules/`  | existing wins → no `.scaffold` sibling (impractical) |
+| `context/`       | scaffold had none; cwd `context/` preserved untouched |
 
 ## Post-scaffold audit
 
 **Tool**: `npm audit --json`
 **Summary**: 0 CRITICAL, 1 HIGH, 9 MODERATE, 0 LOW
-**Direct vs transitive**: 0/0/2/0 direct of total 0/1/9/0 (direct counts: CRITICAL 0, HIGH 0, MODERATE 2 — `@astrojs/check`, `wrangler`)
-
-#### CRITICAL findings
-
-None.
+**Direct vs transitive**: 0/0/2/0 direct of total 0/1/9/0 (CRITICAL/HIGH/MODERATE/LOW)
+**Total dependencies audited**: 895 (449 prod, 316 dev, 131 optional)
 
 #### HIGH findings
 
-- **devalue** v5.6.3–5.8.0 — "Svelte devalue: DoS via sparse array deserialization"
-  Advisory: GHSA-77vg-94rm-hx3p | CVSS 7.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H)
-  Type: transitive (via wrangler / astro build toolchain)
-  Fix available: yes (`npm audit fix`)
+| Package  | Version range   | Advisory                                           | CVSS | Fix available |
+| -------- | --------------- | -------------------------------------------------- | ---- | ------------- |
+| devalue  | 5.6.3 – 5.8.0   | GHSA-77vg-94rm-hx3p — Svelte devalue: DoS via sparse array deserialization | 7.5  | Yes (transitive — fix flows through upstream update) |
+
+Direct cause chain: transitive (no direct dependency on `devalue`).
 
 #### MODERATE findings
 
-1. **@astrojs/check** ≥0.9.3 (direct) — via `@astrojs/language-server` → `volar-service-yaml`. Fix: downgrade to `@astrojs/check@0.9.2` (semver major).
-2. **@astrojs/language-server** ≥2.14.0 (transitive) — via `volar-service-yaml`. Fix available with major version bump on `@astrojs/check`.
-3. **@cloudflare/vite-plugin** various ranges (transitive) — via `miniflare`, `wrangler`, `ws`. Fix available.
-4. **miniflare** various ranges (transitive) — via `ws`. Fix available.
-5. **volar-service-yaml** ≤0.0.70 (transitive) — via `yaml-language-server`. Fix available via `@astrojs/check@0.9.2` major bump.
-6. **wrangler** various ranges (direct) — via `miniflare`. Fix available.
-7. **ws** v8.0.0–8.20.0 (transitive) — "ws: Uninitialized memory disclosure". GHSA-58qx-3vcg-4xpx | CVSS 4.4. Fix available.
-8. **yaml** v2.0.0–2.8.2 (transitive) — "Stack Overflow via deeply nested YAML collections". GHSA-48c2-rrv3-qjmp | CVSS 4.3. Fix available via `@astrojs/check@0.9.2` major bump.
-9. **yaml-language-server** various ranges (transitive) — via `yaml`. Fix available via `@astrojs/check@0.9.2` major bump.
+| Package                | Direct? | Advisory / root cause                          | Fix available |
+| ---------------------- | ------- | ---------------------------------------------- | ------------- |
+| `@astrojs/check`       | yes     | via `@astrojs/language-server` → `volar-service-yaml` | Yes (breaking: downgrade to 0.9.2) |
+| `@astrojs/language-server` | no  | via `volar-service-yaml`                        | Yes (via @astrojs/check) |
+| `@cloudflare/vite-plugin`  | no  | via `miniflare`, `wrangler`, `ws`               | Yes |
+| `miniflare`            | no      | via `ws` (uninitialized memory disclosure)      | Yes |
+| `volar-service-yaml`   | no      | via `yaml-language-server` → `yaml` (stack overflow) | Yes (via @astrojs/check) |
+| `wrangler`             | yes     | via `miniflare` → `ws`                          | Yes |
+| `ws`                   | no      | GHSA-58qx-3vcg-4xpx — uninitialized memory disclosure, CVSS 4.4 | Yes |
+| `yaml`                 | no      | GHSA-48c2-rrv3-qjmp — stack overflow via deeply nested YAML, CVSS 4.3 | Yes (via @astrojs/check) |
+| `yaml-language-server` | no      | via `yaml`                                      | Yes (via @astrojs/check) |
 
 #### LOW / INFO findings
 
@@ -103,28 +118,32 @@ None.
 
 ## Hints recorded but not acted on
 
-| Hint                    | Value               |
-| ----------------------- | ------------------- |
-| bootstrapper_confidence | first-class         |
-| quality_override        | false               |
-| path_taken              | standard            |
-| self_check_answers      | null                |
-| team_size               | solo                |
-| deployment_target       | cloudflare-pages    |
-| ci_provider             | github-actions      |
+| Hint                    | Value                |
+| ----------------------- | -------------------- |
+| bootstrapper_confidence | first-class          |
+| quality_override        | false                |
+| path_taken              | standard             |
+| self_check_answers      | null                 |
+| team_size               | solo                 |
+| deployment_target       | cloudflare-pages     |
+| ci_provider             | github-actions       |
 | ci_default_flow         | auto-deploy-on-merge |
-| has_auth                | true                |
-| has_payments            | false               |
-| has_realtime            | false               |
-| has_ai                  | false               |
-| has_background_jobs     | false               |
+| has_auth                | true                 |
+| has_payments            | false                |
+| has_realtime            | false                |
+| has_ai                  | false                |
+| has_background_jobs     | false                |
+
+These fields were read and logged for audit-trail completeness. A future M1L4 skill ("Memory Architecture") will act on them — for example, wiring `has_auth: true` into `CLAUDE.md` agent context, configuring CI/CD based on `ci_provider`, or placing Cloudflare-specific notes based on `deployment_target`.
 
 ## Next steps
 
 Next: a future skill will set up agent context (CLAUDE.md, AGENTS.md). For now, your project is scaffolded and verified — happy hacking.
 
 Useful manual steps in the meantime:
-- Review `CLAUDE.md.scaffold` (the starter's AI rules file) and decide whether to merge its content into your existing `CLAUDE.md`.
-- Address audit findings per your project's risk tolerance — the full breakdown is in this log. The 1 HIGH finding (`devalue`) is in transitive dev-tooling; run `npm audit fix` to address the fixable ones.
-- Copy `.env.example` to `.env` and fill in your Supabase credentials to start local development.
-- Run `npm run dev` to start the dev server and verify the scaffold works.
+- Review `CLAUDE.md.scaffold` (the starter's agent instructions) and merge any useful sections into your existing `CLAUDE.md`.
+- Review `.vscode.scaffold/` — compare with your `.vscode/` and merge any useful settings (e.g., recommended extensions for Astro/TypeScript).
+- Copy `.env.example` to `.env` (for Node local dev) or `.dev.vars` (for Cloudflare local dev via wrangler) and fill in `SUPABASE_URL` and `SUPABASE_KEY`.
+- Run `npx supabase start` (requires Docker) to start a local Supabase instance.
+- Run `npm run dev` to start the Astro dev server on the Cloudflare Workers runtime.
+- Address audit findings per your project's risk tolerance — full breakdown above. The HIGH finding (`devalue`) is transitive and dev-tooling adjacent; the MODERATE findings in `wrangler` and `@astrojs/check` have available fixes.
