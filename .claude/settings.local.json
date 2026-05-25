@@ -4,7 +4,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(10x *)",
       "Bash(Set-Clipboard \"/10x-prd\")",
-      "Bash(clip)"
+      "Bash(clip)",
+      "Bash(git add *)"
     ]
   }
 }

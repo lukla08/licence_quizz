@@ -54,3 +54,9 @@ desktop.ini
 *.ntvs*
 *.njsproj
 *.sln
+
+# from 10x-astro-starter
+.astro/
+.dev.vars
+.env.production
+.wrangler/
