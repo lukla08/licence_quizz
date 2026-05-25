@@ -54,3 +54,14 @@ desktop.ini
 *.ntvs*
 *.njsproj
 *.sln
+
+# from 10x-astro-starter
+# generated types
+.astro/
+
+# environment variables (cloudflare)
+.env.production
+
+# cloudflare
+.dev.vars
+.wrangler/
