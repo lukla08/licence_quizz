@@ -171,3 +171,28 @@ Planowane warianty klientów (porównanie implementacji — nie należy do PRD):
 | 5 | Java Swing | Desktop | tak |
 
 Warianty rozwijane niezależnie od zera; możliwa rezygnacja z niektórych na późniejszym etapie.
+
+### Decyzje stackowe (ustalone 2026-05-26)
+
+**Backend (wspólny):** Spring Boot (Java, Maven), deploy: Render, CI: GitHub Actions (auto-deploy on merge), katalog `licence-quizz-api`. Hand-off dla bootstrappera: `context/foundation/tech-stack.md`.
+
+**Wspólne dla wszystkich 5 klientów:**
+- Transport: REST + JSON po HTTPS do backendu.
+- Auth: backend wydaje token przy logowaniu; klient przechowuje go (bezpieczny storage zależny od platformy) i dołącza w nagłówku `Authorization`.
+- Izolacja danych egzekwowana po stronie backendu (user widzi tylko swoje tagi/historię).
+
+Zasada porównawcza: warstwa rozmowy z backendem ma być jak najbardziej identyczna w obrębie pary, żeby różnica izolowała toolkit UI, a nie sieć/JSON.
+
+| # | Klient | Język / build | UI | State / architektura | Sieć + JSON | Inne | Rejestr / scaffold |
+|---|--------|---------------|----|----------------------|-------------|------|--------------------|
+| 1 | Flutter | Dart / Flutter CLI (pub) | Flutter widgets | Riverpod | dio + json_serializable/freezed | go_router; flutter_secure_storage; klawiatura via Focus/Shortcuts/Actions (web+desktop) | karta `flutter`, `verified` → możliwy hand-off |
+| 2 | Android + Jetpack Compose | Kotlin / Gradle | Jetpack Compose | MVVM: ViewModel + StateFlow | Retrofit + OkHttp + Moshi (KSP), Coroutines/Flow | DI: Hilt; token: DataStore/EncryptedSharedPreferences; touch-first | brak karty → ręcznie |
+| 3 | Android bez Jetpack Compose | Kotlin / Gradle | XML layouts + View Binding | MVVM: ViewModel + LiveData | **identyczne jak #2** (Retrofit + OkHttp + Moshi + Hilt + Coroutines) | touch-first; różnica vs #2 = tylko warstwa UI | brak karty → ręcznie |
+| 4 | JavaFX | Java / Maven | FXML + kontrolery | MVVM na Property/bindingach | java.net.http.HttpClient + Jackson | javafx-maven-plugin, pakowanie jpackage; klawiatura: akceleratory / setOnKeyPressed | brak karty → ręcznie |
+| 5 | Java Swing | Java / Maven | programatyczny Swing (np. MigLayout) | MVC + SwingWorker (sieć poza EDT) | **identyczne jak #4** (HttpClient + Jackson) | pakowanie jpackage; klawiatura: InputMap/ActionMap, mnemoniki; różnica vs #4 = tylko toolkit UI | brak karty → ręcznie |
+
+**Pary porównawcze (wspólna warstwa danych, różnica w UI):**
+- Android #2 vs #3 → wspólny stack danych (Retrofit/Moshi/Hilt/Coroutines), różnica = Compose vs klasyczne Views.
+- Desktop JVM #4 vs #5 → wspólny stack danych (HttpClient/Jackson), różnica = JavaFX vs Swing.
+
+**Otwarte / do rewizji później:** Moshi vs kotlinx.serialization na Androidzie (wstępnie Moshi); tryb offline (patrz Open Questions w PRD); hosting wideo (zewnętrznie vs w bazie).
