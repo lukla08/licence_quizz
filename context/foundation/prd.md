@@ -1,10 +1,9 @@
 ---
 project: "LicenceQuizz"
-context_type: greenfield
-created: 2026-05-25
-updated: 2026-05-26
 version: 1
 status: draft
+created: 2026-05-26
+context_type: greenfield
 product_type: other
 target_scale:
   users: small
@@ -14,30 +13,6 @@ timeline_budget:
   mvp_weeks: 7
   hard_deadline: null
   after_hours_only: true
-checkpoint:
-  current_phase: 8
-  phases_completed: [1, 2, 3, 4, 5, 6, 7]
-  gray_areas_resolved:
-    - topic: "pain category"
-      decision: "workflow friction (forced video playback) + missing capability (difficulty tagging) + learning quality (no error-based repetition)"
-    - topic: "insight"
-      decision: "no single app combines: interrupt video playback + difficulty tagging + smart repetition based on difficulty/errors"
-    - topic: "primary persona"
-      decision: "user + friends/family — small known group, not a public app"
-    - topic: "access control"
-      decision: "email + password login; each user has separate tags and progress; data in cloud (multi-device access)"
-    - topic: "mvp timeline"
-      decision: "3 weeks after-hours; user confirmed confidence"
-    - topic: "client platform"
-      decision: "multi-platform comparative project; 5 independent clients: Flutter (web+desktop+mobile), Android+JetPack Compose, Android without JC, JavaFX, Java Swing; developed in parallel from scratch; any working variant = MVP"
-    - topic: "timeline revision"
-      decision: "7+ weeks; parallel development of all 5 clients; user consciously accepted sustained effort cost on 2026-05-26"
-    - topic: "keyboard support scope"
-      decision: "Flutter (web + desktop builds), JavaFX, Java Swing; touch-first (one thumb) for Android variants"
-    - topic: "offline mode"
-      decision: "deferred to Open Questions — no decision yet"
-  frs_drafted: 10
-  quality_check_status: accepted
 ---
 
 ## Vision & Problem Statement
@@ -63,17 +38,24 @@ Insight: oczekiwane funkcjonalności nie są wyszukane technicznie — żadna zn
 ### Guardrails
 - Tagi i historia błędów jednego użytkownika są zawsze odizolowane od danych innych kont.
 - Każda odpowiedź jest zapisywana natychmiast — awaria lub odświeżenie nie kasuje wyniku trwającej sesji.
-- Klawiatura: tagowanie trudności i udzielanie odpowiedzi dostępne z klawiatury w wariantach Flutter (web i desktop), JavaFX, Java Swing. Pełna nawigacja po aplikacji nie jest wymagana.
-- Dotyk: wszystkie interakcje w wariantach Android dostępne jednym kciukiem — brak precyzyjnych tapnięć małych obszarów.
+- Tagowanie trudności i udzielanie odpowiedzi są w pełni obsługiwalne z klawiatury na desktopowych i webowych wariantach klienta. Pełna nawigacja po aplikacji z klawiatury nie jest wymagana.
+- Wszystkie interakcje są osiągalne jednym kciukiem na mobilnych (dotykowych) wariantach klienta — bez precyzyjnych tapnięć małych obszarów.
 - Tryb offline: decyzja odroczona — patrz Open Questions.
 
-## Access Control
+## User Stories
 
-Login e-mail + hasło — jeden system auth dla obu aplikacji. Dwie role:
-- **User** — dostęp do aplikacji quizowej; widzi wyłącznie własne tagi i historię błędów.
-- **Admin** — ta sama metoda logowania co user, ale z flagą admin w bazie; dodatkowo dostęp do oddzielnego panelu CMS (zarządzanie pytaniami). Rola nadawana ręcznie przez dewelopera.
+### US-01: Konfiguracja i przejście przez sesję quizową
 
-Dane użytkownika (tagi, historia błędów) są zawsze odizolowane między kontami.
+- **Given** zalogowany użytkownik na ekranie startu
+- **When** wybiera liczbę pytań, kategorię i sposób doboru, a następnie uruchamia quiz
+- **Then** kolejno widzi pytania (z możliwością przerwania wideo), taguje trudność, odpowiada, a po ostatnim pytaniu trafia na ekran podsumowania z opcją nowej sesji
+
+#### Acceptance Criteria
+- Przerwanie wideo jest możliwe w dowolnym momencie odtwarzania
+- Tag trudności można zmienić przed przejściem do następnego pytania; nie zmienia kolejki pytań w bieżącej sesji
+- Podsumowanie pokazuje liczbę poprawnych/błędnych odpowiedzi z tej sesji
+- Tagowanie trudności i udzielanie odpowiedzi są obsługiwalne z klawiatury na desktopowych i webowych wariantach klienta
+- Wszystkie interakcje są osiągalne jednym kciukiem na mobilnych (dotykowych) wariantach klienta
 
 ## Functional Requirements
 
@@ -115,59 +97,34 @@ Dane użytkownika (tagi, historia błędów) są zawsze odizolowane między kont
 - FR-010: Administrator może zarządzać bazą pytań przez oddzielny panel CMS (dodawanie, edycja, usuwanie pytań wraz z wideo). Priority: must-have
   > Socrates: Brak kontrargumentu — bez możliwości edycji pytań aplikacja jest nieużyteczna po fazie MVP z ręcznie wpisanymi danymi.
 
+## Non-Functional Requirements
+
+- Dane użytkownika (historia błędów, tagi trudności) nie są udostępniane osobom trzecim.
+- Tagowanie trudności i udzielanie odpowiedzi są obsługiwalne z klawiatury na desktopowych i webowych wariantach klienta.
+- Wszystkie interakcje są osiągalne jednym kciukiem na mobilnych (dotykowych) wariantach klienta, bez precyzyjnych tapnięć małych obszarów.
+
 ## Business Logic
 
 Aplikacja dobiera pytania na podstawie historii trudności i błędów użytkownika.
 
 Wejścia reguły (jako dane użytkownika, nie komponenty systemu): tagi trudności nadane przez użytkownika per pytanie oraz liczba błędnych odpowiedzi na to pytanie w poprzednich sesjach. Wyjście: zestaw pytań do sesji zgodny z wybranym trybem doboru (wszystkie / wg tagów / najbardziej kłopotliwe). Użytkownik napotyka regułę w momencie konfiguracji sesji — wybór trybu decyduje o tym, które pytania trafią do kolejki.
 
-## Non-Functional Requirements
+## Access Control
 
-- Dane użytkownika (historia błędów, tagi trudności) nie są udostępniane osobom trzecim.
-- Klawiatura: tagowanie trudności i udzielanie odpowiedzi dostępne z klawiatury w wariantach Flutter (web i desktop), JavaFX, Java Swing.
-- Dotyk: interakcje w wariantach Android dostępne jednym kciukiem bez precyzyjnych tapnięć.
+Login e-mail + hasło — jeden system auth dla obu aplikacji. Dwie role:
+- **User** — dostęp do aplikacji quizowej; widzi wyłącznie własne tagi i historię błędów.
+- **Admin** — ta sama metoda logowania co user, ale z podniesionymi uprawnieniami; dodatkowo dostęp do oddzielnego panelu CMS (zarządzanie pytaniami). Rola nadawana ręcznie przez dewelopera.
+
+Dane użytkownika (tagi, historia błędów) są zawsze odizolowane między kontami.
 
 ## Non-Goals
 
 - Brak jednolitej bazy kodu między wariantami klientów — każda implementacja jest celowo oddzielna (cel porównawczy).
-- Brak dedykowanego klienta webowego (np. React/Vue/Angular) — Flutter web jako build target Fluttera nie jest tą samą kategorią i nie wyklucza tego non-goal.
+- Brak dedykowanego, ręcznie pisanego klienta webowego — webowy build target wieloplatformowego toolkitu nie należy do tej kategorii i nie narusza tego non-goal.
 - Brak publicznej rejestracji — konta tworzone tylko dla znanych użytkowników; aplikacja nie jest otwartą platformą dla wszystkich kandydatów.
 - Brak pełnej bazy pytań egzaminacyjnych — MVP zawiera wąski, ręcznie wprowadzony zestaw pytań; pełna baza to rozbudowa post-MVP.
 - Brak statystyk między sesjami (FR-009) — potwierdzone jako nice-to-have; odkładamy do momentu, gdy będą realne dane.
 
-## User Stories
-
-### US-01: Konfiguracja i przejście przez sesję quizową
-
-- **Given** zalogowany użytkownik na ekranie startu
-- **When** wybiera liczbę pytań, kategorię i sposób doboru, a następnie uruchamia quiz
-- **Then** kolejno widzi pytania (z możliwością przerwania wideo), taguje trudność, odpowiada, a po ostatnim pytaniu trafia na ekran podsumowania z opcją nowej sesji
-
-#### Acceptance Criteria
-- Przerwanie wideo jest możliwe w dowolnym momencie odtwarzania
-- Tag trudności można zmienić przed przejściem do następnego pytania; nie zmienia kolejki pytań w bieżącej sesji
-- Podsumowanie pokazuje liczbę poprawnych/błędnych odpowiedzi z tej sesji
-- Klawiatura: tagowanie trudności i udzielanie odpowiedzi dostępne z klawiatury w wariantach Flutter (web i desktop), JavaFX, Java Swing
-- Dotyk: wszystkie interakcje w wariantach Android dostępne jednym kciukiem
-
-## Timeline acknowledgment
-
-Acknowledged on 2026-05-26: 7+ tygodni MVP (równoległy start wszystkich 5 wariantów klientów) wymaga długotrwałego zaangażowania; użytkownik świadomie akceptuje ten koszt. MVP = dowolny działający wariant, który dotrze pierwszy. Na późniejszym etapie możliwa rezygnacja z niektórych wariantów.
-
 ## Open Questions
 
-- **Tryb offline**: czy warianty Android powinny działać bez połączenia sieciowego? Decyzja odroczona. Implikacja: wymaga cache'owania pytań i wideo na urządzeniu, co podnosi koszt MVP.
-
-## Forward: tech-stack
-
-Planowane warianty klientów (porównanie implementacji — nie należy do PRD):
-
-| # | Klient | Platforma | Keyboard support |
-|---|--------|-----------|-----------------|
-| 1 | Flutter | Web + Desktop + Mobile | tak (web i desktop) |
-| 2 | Android + JetPack Compose | Mobile | dotyk |
-| 3 | Android bez JetPack Compose | Mobile | dotyk |
-| 4 | JavaFX | Desktop | tak |
-| 5 | Java Swing | Desktop | tak |
-
-Warianty rozwijane niezależnie od zera; możliwa rezygnacja z niektórych na późniejszym etapie.
+1. **Tryb offline** — czy mobilne (dotykowe) warianty klienta powinny działać bez połączenia sieciowego? Decyzja odroczona. Owner: użytkownik. Implikacja: wymaga cache'owania pytań i wideo na urządzeniu, co podnosi koszt MVP.
