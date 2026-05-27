@@ -5,7 +5,11 @@
       "Bash(10x *)",
       "Bash(Set-Clipboard \"/10x-prd\")",
       "Bash(clip)",
-      "Bash(clip.exe)"
+      "Bash(clip.exe)",
+      "WebSearch",
+      "WebFetch(domain:fly.io)",
+      "WebFetch(domain:railway.com)",
+      "WebFetch(domain:render.com)"
     ]
   }
 }

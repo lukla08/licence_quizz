@@ -5,7 +5,7 @@ Spring Boot 4.0.6 / Java 21 REST API backing the LicenceQuizz multi-client app. 
 ## Hard Rules
 
 - Each user's quiz results, tags, and error history must never leak to another account. Enforce isolation at the service layer with per-account queries (not just at the API boundary).
-- Use `${ENV_VAR_NAME}` placeholders in `application.properties`; actual values live in the Render environment dashboard. Never hardcode credentials or API keys.
+- Use `${ENV_VAR_NAME}` placeholders in `application.properties`; actual values live in OS environment variables or a local `application-local.properties` (not committed). Never hardcode credentials or API keys.
 
 ## Package Structure
 
@@ -24,4 +24,4 @@ Tests live under `src/test/java/com/example/licencequizz/`. See `@src/test/java/
 
 ## Deployment
 
-GitHub Actions runs `./mvnw test` on every push; merge to `master` triggers an auto-deploy to Render. A failing test blocks the deploy — do not skip tests in CI.
+CI/CD pipeline is not yet configured. Cloud deployment is deferred — see `@context/foundation/infrastructure.md` for the planned approach (Railway, triggered manually when needed).
