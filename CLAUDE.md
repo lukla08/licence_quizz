@@ -4,9 +4,10 @@ This file provides guidance to AI Agent when working with code in this repositor
 
 ## Pending Work
 
-> First production deployment is in progress — stopped at the Wrangler login manual gate.
-> Read `context/deployment/deploy-plan.md` and offer to resume from Step 3.
-> Remove this section once all steps in deploy-plan.md are marked complete.
+> Worker is live at https://licence-quizz.licquizz.workers.dev (deployed 2026-05-29).
+> CI auto-deploy is NOT yet active — Steps 7a and 7b in `context/deployment/deploy-plan.md` require
+> manual setup: create a scoped Cloudflare API token and add it (plus SUPABASE_URL, SUPABASE_KEY)
+> as GitHub Actions secrets. Remove this section once those two steps are done.
 
 ## Commands
 
