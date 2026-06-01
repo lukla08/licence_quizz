@@ -308,24 +308,24 @@ dla porządku, ale to nie hotspot.
 
 #### Automated
 
-- [x] 3.1 Typy generują się bez błędów (`supabase gen types typescript --local`)
-- [x] 3.2 Type-check/build przechodzi (`npm run build`)
-- [x] 3.3 Lint przechodzi (`npm run lint`)
+- [x] 3.1 Typy generują się bez błędów (`supabase gen types typescript --local`) — ce8c980
+- [x] 3.2 Type-check/build przechodzi (`npm run build`) — ce8c980
+- [x] 3.3 Lint przechodzi (`npm run lint`) — ce8c980
 
 #### Manual
 
-- [x] 3.4 `locals.isAdmin` poprawne dla admina/usera/niezalogowanego
-- [x] 3.5 `src/types.ts` zawiera wszystkie 7 tabel
+- [x] 3.4 `locals.isAdmin` poprawne dla admina/usera/niezalogowanego — ce8c980
+- [x] 3.5 `src/types.ts` zawiera wszystkie 7 tabel — ce8c980
 
 ### Phase 4: Wdrożenie na hostowany Supabase
 
 #### Automated
 
-- [ ] 4.1 Push bez błędów (`npx supabase db push`)
-- [ ] 4.2 Status migracji zsynchronizowany (`supabase migration list`)
+- [x] 4.1 Push bez błędów (`npx supabase db push`)
+- [x] 4.2 Status migracji zsynchronizowany (`supabase migration list`)
 
 #### Manual
 
-- [ ] 4.3 Hostowane Studio: 7 tabel + RLS + dane seeda
+- [x] 4.3 Hostowane Studio: 7 tabel + RLS + dane seeda
 - [ ] 4.4 Smoke izolacji na żywo (konto A nie widzi danych konta B)
 - [ ] 4.5 Odczyt pytań dla usera, zapis tylko dla admina
