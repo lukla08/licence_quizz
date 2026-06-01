@@ -280,29 +280,29 @@ dla porządku, ale to nie hotspot.
 
 #### Automated
 
-- [x] 1.1 Lokalna baza wstaje (`npx supabase start`)
-- [x] 1.2 Migracja aplikuje się czysto od zera (`npx supabase db reset`)
-- [x] 1.3 Lint/format bez błędów (`npm run lint`)
-- [x] 1.4 Skrypt izolacji RLS przechodzi (cross-user 0 wierszy; zapis questions tylko admin)
+- [x] 1.1 Lokalna baza wstaje (`npx supabase start`) — 2c30124
+- [x] 1.2 Migracja aplikuje się czysto od zera (`npx supabase db reset`) — 2c30124
+- [x] 1.3 Lint/format bez błędów (`npm run lint`) — 2c30124
+- [x] 1.4 Skrypt izolacji RLS przechodzi (cross-user 0 wierszy; zapis questions tylko admin) — 2c30124
 
 #### Manual
 
-- [x] 1.5 Studio: 7 tabel z RLS i kompletem polityk
-- [x] 1.6 Ręczne nadanie admina umożliwia zapis questions
-- [x] 1.7 Nowy signup tworzy wiersz profiles (is_admin=false)
+- [x] 1.5 Studio: 7 tabel z RLS i kompletem polityk — 2c30124
+- [x] 1.6 Ręczne nadanie admina umożliwia zapis questions — 2c30124
+- [x] 1.7 Nowy signup tworzy wiersz profiles (is_admin=false) — 2c30124
 
 ### Phase 2: Seed
 
 #### Automated
 
-- [ ] 2.1 Seed aplikuje się przy `db reset`
-- [ ] 2.2 Liczności zgodne (3 kategorie, ~12 pytań, dokładnie 1 poprawna opcja na pytanie)
-- [ ] 2.3 Ponowny `db reset` nie duplikuje wierszy (idempotencja)
+- [x] 2.1 Seed aplikuje się przy `db reset`
+- [x] 2.2 Liczności zgodne (3 kategorie, ~12 pytań, dokładnie 1 poprawna opcja na pytanie)
+- [x] 2.3 Ponowny `db reset` nie duplikuje wierszy (idempotencja)
 
 #### Manual
 
-- [ ] 2.4 Pytania rozłożone na 3 kategorie
-- [ ] 2.5 Treść i opcje sensowne
+- [x] 2.4 Pytania rozłożone na 3 kategorie
+- [x] 2.5 Treść i opcje sensowne
 
 ### Phase 3: Wpięcie w aplikację
 

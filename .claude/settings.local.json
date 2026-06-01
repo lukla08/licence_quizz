@@ -14,16 +14,22 @@
       "Bash(git stash *)",
       "Read",
       "Edit",
-      "Write"
+      "Write",
+      "Bash(xargs cat)",
+      "Bash(psql -d postgresql://postgres:postgres@127.0.0.1:54322/postgres -t -c 'select '\\\\''kategorie: '\\\\''||count\\(*\\) from public.categories; select '\\\\''pytania: '\\\\''||count\\(*\\) from public.questions; select '\\\\''opcje: '\\\\''||count\\(*\\) from public.answer_options;')",
+      "Bash(psql -d postgresql://postgres:postgres@127.0.0.1:54322/postgres -c 'select q.id, count\\(*\\) filter \\(where ao.is_correct\\) as poprawne from public.questions q join public.answer_options ao on ao.question_id=q.id group by q.id having count\\(*\\) filter \\(where ao.is_correct\\) <> 1;')",
+      "Bash(psql -d postgresql://postgres:postgres@127.0.0.1:54322/postgres -c 'select q.id, count\\(ao.*\\) as opcje from public.questions q join public.answer_options ao on ao.question_id=q.id group by q.id having count\\(ao.*\\) < 3;')",
+      "Bash(psql -d postgresql://postgres:postgres@127.0.0.1:54322/postgres -t -c 'select c.name||'\\\\'': '\\\\''||count\\(q.*\\) from public.categories c left join public.questions q on q.category_id=c.id group by c.name order by c.name;')",
+      "Bash(psql -d postgresql://postgres:postgres@127.0.0.1:54322/postgres -v ON_ERROR_STOP=1 -f supabase/seed.sql)"
+    ],
+    "deny": [
+      "Bash(rm -rf *)"
     ],
     "ask": [
       "Bash(curl *)",
       "Bash(wget *)",
       "Bash(git push *)",
       "Bash(git push)"
-    ],
-    "deny": [
-      "Bash(rm -rf *)"
     ]
   }
 }
