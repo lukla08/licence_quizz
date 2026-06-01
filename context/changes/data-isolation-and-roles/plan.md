@@ -321,11 +321,11 @@ dla porządku, ale to nie hotspot.
 
 #### Automated
 
-- [x] 4.1 Push bez błędów (`npx supabase db push`)
-- [x] 4.2 Status migracji zsynchronizowany (`supabase migration list`)
+- [x] 4.1 Push bez błędów (`npx supabase db push`) — e4536c3
+- [x] 4.2 Status migracji zsynchronizowany (`supabase migration list`) — e4536c3
 
 #### Manual
 
-- [x] 4.3 Hostowane Studio: 7 tabel + RLS + dane seeda
-- [ ] 4.4 Smoke izolacji na żywo (konto A nie widzi danych konta B)
-- [ ] 4.5 Odczyt pytań dla usera, zapis tylko dla admina
+- [x] 4.3 Hostowane Studio: 7 tabel + RLS + dane seeda — e4536c3
+- [x] 4.4 Smoke izolacji na żywo (konto A nie widzi danych konta B) — e4536c3
+- [x] 4.5 Odczyt pytań dla usera, zapis tylko dla admina — e4536c3

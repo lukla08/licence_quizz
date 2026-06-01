@@ -2,7 +2,7 @@
 change_id: data-isolation-and-roles
 title: "Izolacja danych i role dostępu (F-01)"
 roadmap_id: F-01
-status: implementing
+status: implemented
 created: 2026-06-01
 updated: 2026-06-01
 ---
