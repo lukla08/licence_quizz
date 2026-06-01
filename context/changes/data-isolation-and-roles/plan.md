@@ -295,27 +295,27 @@ dla porządku, ale to nie hotspot.
 
 #### Automated
 
-- [x] 2.1 Seed aplikuje się przy `db reset`
-- [x] 2.2 Liczności zgodne (3 kategorie, ~12 pytań, dokładnie 1 poprawna opcja na pytanie)
-- [x] 2.3 Ponowny `db reset` nie duplikuje wierszy (idempotencja)
+- [x] 2.1 Seed aplikuje się przy `db reset` — 7db7c09
+- [x] 2.2 Liczności zgodne (3 kategorie, ~12 pytań, dokładnie 1 poprawna opcja na pytanie) — 7db7c09
+- [x] 2.3 Ponowny `db reset` nie duplikuje wierszy (idempotencja) — 7db7c09
 
 #### Manual
 
-- [x] 2.4 Pytania rozłożone na 3 kategorie
-- [x] 2.5 Treść i opcje sensowne
+- [x] 2.4 Pytania rozłożone na 3 kategorie — 7db7c09
+- [x] 2.5 Treść i opcje sensowne — 7db7c09
 
 ### Phase 3: Wpięcie w aplikację
 
 #### Automated
 
-- [ ] 3.1 Typy generują się bez błędów (`supabase gen types typescript --local`)
-- [ ] 3.2 Type-check/build przechodzi (`npm run build`)
-- [ ] 3.3 Lint przechodzi (`npm run lint`)
+- [x] 3.1 Typy generują się bez błędów (`supabase gen types typescript --local`)
+- [x] 3.2 Type-check/build przechodzi (`npm run build`)
+- [x] 3.3 Lint przechodzi (`npm run lint`)
 
 #### Manual
 
-- [ ] 3.4 `locals.isAdmin` poprawne dla admina/usera/niezalogowanego
-- [ ] 3.5 `src/types.ts` zawiera wszystkie 7 tabel
+- [x] 3.4 `locals.isAdmin` poprawne dla admina/usera/niezalogowanego
+- [x] 3.5 `src/types.ts` zawiera wszystkie 7 tabel
 
 ### Phase 4: Wdrożenie na hostowany Supabase
 
