@@ -1,8 +1,9 @@
 ---
 project: "ClickUp Simplifier"
-context_type: greenfield
+version: 1
+status: draft
 created: 2026-06-06
-updated: 2026-06-06
+context_type: greenfield
 product_type: "desktop + web-app (multi-client; specific client choice deferred)"
 target_scale:
   users: small
@@ -12,53 +13,9 @@ timeline_budget:
   mvp_weeks: 6
   hard_deadline: null
   after_hours_only: false
-checkpoint:
-  current_phase: 8
-  phases_completed: [1, 2, 3, 4, 5, 6, 7]
-  gray_areas_resolved:
-    - topic: "pain category"
-      decision: "workflow friction + cognitive overload + data hard to access"
-    - topic: "core insight"
-      decision: "local copy of data + fast keyboard-first UI beats heavy online client"
-    - topic: "primary persona scope"
-      decision: "single user (the author); personal tool"
-    - topic: "app access model"
-      decision: "no auth; single user, single device, local data"
-    - topic: "ClickUp connection auth"
-      decision: "personal API token pasted by the user (no OAuth for MVP)"
-    - topic: "MVP write scope"
-      decision: "selective writes (milestone create + task->milestone assignment) first; edit surface grows over time"
-    - topic: "MVP data scope"
-      decision: "whole workspace, via tiered sync (dictionaries rare, tasks incremental/frequent, both manually triggerable)"
-    - topic: "core domain model"
-      decision: "milestones and tasks are never shown at the same level; a task belongs to a milestone"
-    - topic: "timeline"
-      decision: "~6-week MVP, longer-than-default cost explicitly accepted"
-    - topic: "domain rule core"
-      decision: "strict milestone->task hierarchy is the core rule; release note is a derived secondary feature"
-    - topic: "offline scope"
-      decision: "MVP requires a live ClickUp connection; offline operation is a non-goal"
-    - topic: "data freshness"
-      decision: "task changes reflected within minutes via frequent auto-sync (connection available)"
-    - topic: "named sync sets"
-      decision: "two named sets — 'Podstawowe słowniki' (dictionaries, slow cadence) and 'Zadania' (tasks, fast incremental cadence); catalogue fixed for MVP"
-    - topic: "sync management surface"
-      decision: "a sync panel shows per-set last-success + last-failure time and the error description on failure, allows immediate on-demand trigger, and configures per-set automatic frequency"
-    - topic: "auto-sync frequency input"
-      decision: "predefined preset cadences to pick from, plus a manual custom-value entry as an escape hatch"
-  frs_drafted: 19
-  quality_check_status: accepted
 ---
 
-# Shape Notes
-
-> Seed idea (verbatim, PL): Od dłuższego czasu pracuję z ClickUp, interfejs jest
-> „przeładowany", wielokrotnie okazał się nieprzewidywalny, brakuje mi spójnej i
-> pewnej obsługi klawiatury. Bardziej odpowiadał mi interfejs Mantis. Zamierzam
-> napisać klienta, który usunie wrażenie przeładowania, będzie pracował na kopii
-> danych ClickUp. Synchronizacja danych będzie musiała być elementem rozwiązania.
-> Nie zależy mi na wszystkich rozbudowanych funkcjach — zależy mi na małym
-> zakresie obsłużonym intuicyjnie (zakres może się rozbudowywać).
+# PRD: ClickUp Simplifier
 
 ## Vision & Problem Statement
 
@@ -71,14 +28,10 @@ the tool is not trusted to behave consistently.
 
 The insight: working on a *local copy* of ClickUp data behind a fast,
 keyboard-first interface beats the heavy online client. A small, consistent,
-predictable set of operations — closer in spirit to the Mantis interface the
-user prefers — serves a power user better than ClickUp's full feature surface.
-Synchronization between the local copy and ClickUp is a required part of the
-solution, not an afterthought.
-
-> Open thread: "unpredictable" is not yet decomposed into specific failures
-> (focus jumps, inconsistent shortcuts, surprising save behavior). To be pinned
-> down as guardrails in Phase 3.
+predictable set of operations — closer in spirit to the leaner Mantis interface
+the user prefers — serves a power user better than ClickUp's full feature
+surface. Synchronization between the local copy and ClickUp is a required part of
+the solution, not an afterthought.
 
 ## User & Persona
 
@@ -90,19 +43,6 @@ actually rely on, and they preferred the leaner, more predictable Mantis-style
 interface. This is a personal, single-user tool; multi-user scope is explicitly
 out for now (may grow later).
 
-## Access Control
-
-Single user; no app-level authentication. The client runs locally for one
-person on one device, and the local copy of the data lives on-device. There are
-no roles and no access separation — a flat, single-user model.
-
-The product does, however, hold one external credential: a **ClickUp personal
-API token** that the user pastes into the app's settings. The app uses this
-token to read from and synchronize with ClickUp on the user's behalf. OAuth is
-explicitly out of scope for the MVP (it only earns its cost in a multi-user
-product). The token is the only secret the app manages; how it is stored
-securely on-device is a downstream implementation concern.
-
 ## Success Criteria
 
 ### Primary
@@ -112,20 +52,19 @@ securely on-device is a downstream implementation concern.
   more frequently — and presents tasks strictly nested under milestones
   (milestones and tasks are never shown at the same level), fully
   keyboard-navigable.
+- Working with tasks is context-first: the user selects a higher-level context
+  (folder, etc.) first, then works on the tasks within it. The client remembers
+  the previous selections, so the next launch resumes at the last chosen context.
+- From the keyboard, the user can create a milestone and assign tasks to it, and
+  those selected changes round-trip back to ClickUp.
 - A **sync management panel** gives the user full visibility and control over
   synchronization: per sync set it shows the last successful and last failed sync
   time (with the error description on failure), lets the user trigger a sync
   immediately, and lets the user set each set's automatic frequency.
-- Working with tasks is context-first: the user selects a higher-level context
-  (folder, etc.) first, then works on the tasks within it. The client remembers
-  the previous selections, so the next launch resumes at the last chosen
-  context.
-- From the keyboard, the user can create a milestone and assign tasks to it, and
-  those selected changes round-trip back to ClickUp.
 
 ### Secondary
-- Access to a milestone's release note (exact definition still open — see Open
-  Questions).
+- Access to a milestone's release note — a read-only list of resolved tasks per
+  milestone, or aggregated across the current context's milestones.
 - Consistent, predictable keyboard handling across the whole app.
 
 ### Guardrails
@@ -138,11 +77,21 @@ securely on-device is a downstream implementation concern.
   pain; regressing here means the product failed at its core promise.)
 - Navigating the local copy stays instant even at whole-workspace size.
 
-## Timeline acknowledgment
+## User Stories
 
-Acknowledged on 2026-06-06: ~6-week MVP (per single client) is longer than the
-3-week default and requires sustained dedication; user accepted the cost
-explicitly. Work happens within the day job (not after-hours).
+### US-01: User organizes tasks under milestones in a fast keyboard-driven view
+
+- **Given** a configured ClickUp token and a synced local copy of the workspace
+- **When** the user selects a higher-level context, navigates with the keyboard,
+  creates a milestone, and assigns tasks to it
+- **Then** the tasks appear strictly nested under their milestone, and the
+  selected changes are synchronized back to ClickUp
+
+#### Acceptance Criteria
+- Milestones and tasks are never rendered at the same level
+- Every step is completable without the mouse
+- Selected changes round-trip to ClickUp without creating duplicates
+- (If FR-006 is built) the chosen context is restored on the next launch
 
 ## Functional Requirements
 
@@ -199,69 +148,6 @@ explicitly. Work happens within the day job (not after-hours).
 > Note: edit surface is expected to grow over later versions; FR-012/FR-013 are
 > the first writes beyond milestone organization. More may be added.
 
-## User Stories
-
-### US-01: User organizes tasks under milestones in a fast keyboard-driven view
-
-- **Given** a configured ClickUp token and a synced local copy of the workspace
-- **When** the user selects a higher-level context, navigates with the keyboard,
-  creates a milestone, and assigns tasks to it
-- **Then** the tasks appear strictly nested under their milestone, and the
-  selected changes are synchronized back to ClickUp
-
-#### Acceptance Criteria
-- Milestones and tasks are never rendered at the same level
-- Every step is completable without the mouse
-- Selected changes round-trip to ClickUp without creating duplicates
-- (If FR-006 is built) the chosen context is restored on the next launch
-
-## Business Logic
-
-The app presents every task strictly within a milestone — milestones and tasks
-are never peers — so the user always works in a two-level milestone→task
-structure mirrored to and from ClickUp.
-
-The rule consumes the milestones and tasks held in the local copy of the
-workspace. Its output is a strictly two-level organization: within a chosen
-higher-level context, the user sees milestones, and each task appears nested
-under exactly one milestone (never beside one). The user encounters the rule
-throughout the flow — selecting a context, navigating milestones and their
-tasks from the keyboard, creating milestones, and assigning tasks to them — and
-the resulting structure is propagated back to ClickUp through the reviewed
-write-back (FR-014).
-
-Release notes are a *derived, secondary* feature layered on top of this rule —
-not part of the core rule itself: for a given milestone (or aggregated across
-the current context's milestones), the app composes the list of that milestone's
-resolved tasks (FR-011).
-
-> Unresolved: how tasks with no milestone are presented in this strict two-level
-> structure — see Open Questions #2.
-
-### Sync sets & sync management
-
-Synchronization is modelled as a small fixed catalogue of **named sync sets**,
-each with its own cadence and its own status. The MVP catalogue is two sets:
-
-- **Podstawowe słowniki** — dictionaries (lists, folders). Change rarely, so a
-  slow default cadence.
-- **Zadania** — tasks. Change often, synced incrementally on a fast cadence.
-
-Each sync set carries an independent status the panel renders: the timestamp of
-its last *successful* run and the timestamp of its last *failed* run are tracked
-separately (a later failure does not erase the last-known-good time, and vice
-versa), so the user can always see both "how fresh is this set" and "did its most
-recent attempt break." A failed run additionally records an error description,
-shown in the panel. From the panel the user can activate a set immediately
-(independent of its schedule) and set the frequency of its automatic runs —
-choosing from predefined preset cadences or entering a custom value by hand. The
-catalogue may grow as more data types are synced, but the per-set model
-(name + cadence + last-OK/last-error + error text + manual trigger) stays the
-same.
-
-> The set catalogue is fixed in MVP (two sets); user-defined custom sync sets are
-> not in scope.
-
 ## Non-Functional Requirements
 
 - Navigating and reading the local copy presents results within ~100 ms as the
@@ -273,9 +159,46 @@ same.
 - With a connection available, task changes made in ClickUp are reflected in the
   local copy within minutes under normal use (frequent automatic sync).
 
-> MVP requires a live connection to ClickUp to function — offline operation is a
-> non-goal (formalized in Non-Goals). The local copy exists for speed and a lean
-> UI, not for disconnected use.
+## Business Logic
+
+The app presents every task strictly within a milestone — milestones and tasks
+are never peers — so the user always works in a two-level milestone→task
+structure mirrored to and from ClickUp.
+
+The rule consumes the milestones and tasks held in the local copy of the
+workspace. Its output is a strictly two-level organization: within a chosen
+higher-level context, the user sees milestones, and each task appears nested
+under exactly one milestone (never beside one). The user encounters the rule
+throughout the flow — selecting a context, navigating milestones and their tasks
+from the keyboard, creating milestones, and assigning tasks to them — and the
+resulting structure is propagated back to ClickUp through the reviewed write-back
+(FR-014). Release notes are a *derived, secondary* feature layered on top of this
+rule: for a given milestone (or aggregated across the current context's
+milestones), the app composes the list of that milestone's resolved tasks
+(FR-011).
+
+Synchronization is modelled as a small fixed catalogue of **named sync sets**,
+each with its own cadence and its own status: "Podstawowe słowniki"
+(dictionaries, slow cadence) and "Zadania" (tasks, fast incremental cadence).
+Each set independently tracks the time of its last successful run and the time of
+its last failed run (a later failure does not erase the last-known-good time, and
+vice versa), and a failed run records an error description. The user can activate
+a set immediately, independent of its schedule, and set the frequency of its
+automatic runs by picking a preset cadence or entering a custom value. The set
+catalogue is fixed for the MVP; user-defined custom sync sets are out of scope.
+
+## Access Control
+
+Single user; no app-level authentication. The client runs locally for one person
+on one device, and the local copy of the data lives on-device. There are no roles
+and no access separation — a flat, single-user model.
+
+The product holds one external credential: a **ClickUp personal API token** that
+the user pastes into the app's settings. The app uses this token to read from and
+synchronize with ClickUp on the user's behalf. OAuth is explicitly out of scope
+for the MVP (it only earns its cost in a multi-user product). The token is the
+only secret the app manages; how it is stored securely on-device is a downstream
+implementation concern.
 
 ## Non-Goals
 
@@ -286,40 +209,30 @@ same.
   lean, predictable subset, not parity.
 - **Dictionary structure management** — creating or editing spaces/folders/lists
   from the client is out; dictionaries are synced read-only, not managed here.
+- **User-defined custom sync sets** — the sync set catalogue is fixed for the MVP
+  (two named sets); the user tunes each set's cadence but cannot define new sets.
 - **Offline operation** — the MVP requires a live ClickUp connection; the local
-  copy is for speed and a lean UI, not for disconnected use. (Non-functional
-  non-goal.)
+  copy is for speed and a lean UI, not for disconnected use.
 - **OAuth** — only a personal API token is supported for MVP; full OAuth is out
-  until/unless the tool goes multi-user. (Non-functional non-goal.)
+  until/unless the tool goes multi-user.
 
 > Not locked: sub-tasks / levels deeper than milestone→task were deliberately
 > NOT ruled out — the two-level model is the MVP presentation, but deeper nesting
 > may be added as scope grows.
 
-## Forward: tech-stack
-
-(Not part of the PRD schema — captured for `/10x-tech-stack-selector`.)
-
-- Client/stack choice is **deliberately deferred**. Exploration starts from
-  several implementations in parallel, possibly all carried to completion:
-  - native **web**
-  - **Flutter** (emphasis on web and desktop)
-  - native **desktop in Java**
-- Architectural implication to carry forward: a **shared core** (local copy +
-  tiered sync as named sync sets, each with cadence + last-OK/last-error status +
-  error text + on-demand trigger + milestone→task domain model + reviewed
-  write-back) with **swappable front-ends**, so multiple clients can sit on one
-  engine. The sync management panel is a view over per-set state the core owns.
-- ClickUp integration uses a **personal API token** (no OAuth) for MVP.
-
 ## Open Questions
 
-1. ~~**What exactly is a milestone "release note"?**~~ **RESOLVED 2026-06-06:** a
-   read-only list of resolved (completed) tasks in a milestone, or aggregated
-   across all milestones in the current context. Captured in FR-011.
-2. **How are tasks not assigned to any milestone presented?** — Proposed: a
-   virtual "no milestone" node so they stay visible (strict hierarchy must not
-   hide them). Owner: user. To pin down in Business Logic (Phase 5).
-3. **What is the write-back review mechanism?** — From FR-014: changes push to
-   ClickUp only after explicit user review/approval. Exact UX (e.g. a pending-
-   changes queue + confirm step) to be specified. Owner: user / downstream.
+1. **How are tasks not assigned to any milestone presented?** — Proposed: a
+   virtual "no milestone" node so they stay visible (the strict hierarchy must
+   not hide them). Owner: user. To pin down in Business Logic.
+2. **What is the write-back review mechanism?** — From FR-014: changes push to
+   ClickUp only after explicit user review/approval. Exact UX (e.g. a
+   pending-changes queue + confirm step) to be specified. Owner: user /
+   downstream.
+3. **What are the predefined auto-sync frequency presets?** — FR-019 commits to
+   presets + custom entry, but the concrete preset cadences (and sensible
+   defaults per set) are not yet chosen. Owner: user.
+4. **Does sync management warrant its own user story?** — FR-015..FR-019 are
+   fully specified, but only US-01 (milestone organization) carries a
+   Given/When/Then. A sync-management acceptance story may be worth adding.
+   Owner: user / downstream.
