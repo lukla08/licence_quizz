@@ -1,0 +1,32 @@
+---
+description: Architecture rules — apply when creating modules, services, or cross-cutting structure
+globs:
+alwaysApply: false
+---
+
+# Architecture constraints
+
+## Shared core + swappable frontends
+Business logic and sync engine live in a **framework-agnostic core layer**.
+UI layers (web, Flutter, Java Swing/JavaFX) are thin wrappers over the core.
+Never put domain logic in a UI component.
+
+## Core responsibilities
+- Local database (workspace snapshot)
+- Sync engine: named sync sets with independent scheduling + status tracking
+- Domain model: milestone → task hierarchy, context selection, release notes
+- Write-back queue: stage changes, hold for user approval, then push to ClickUp API
+
+## Local copy
+The local DB is the source of truth for reads. All navigation and display goes
+through the local copy — never a live ClickUp API call for read operations.
+
+## ClickUp API
+Used only for:
+1. Initial full workspace pull (one-time)
+2. Incremental sync (delta fetch for tasks)
+3. Approved write-back pushes
+
+## Performance target
+All reads from the local copy must complete in ≤ 100 ms. Any query that cannot
+meet this must be pre-computed / indexed at sync time, not at read time.

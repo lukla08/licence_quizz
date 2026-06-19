@@ -1,0 +1,31 @@
+---
+description: Coding style — apply to all code generation
+globs:
+alwaysApply: true
+---
+
+# Coding style
+
+## Comments
+- No comments explaining *what* the code does — names do that.
+- Only add a comment when the *why* is non-obvious: a hidden constraint,
+  a workaround for a specific bug, an invariant that would surprise a reader.
+
+## Abstractions
+- No premature helpers. Three similar lines beat a utility added for imagined reuse.
+- No half-finished implementations. If a feature isn't complete, don't scaffold it.
+
+## Error handling
+- No defensive error handling for impossible cases.
+- Validate at system boundaries only: user input, ClickUp API responses.
+- Trust internal code and framework guarantees.
+
+## Security
+- Never log secrets (ClickUp API token).
+- Never display the raw token in UI error messages.
+- Sync state must persist across app restarts (survive process exit).
+
+## Keyboard
+- Every user-facing action must be reachable from the keyboard.
+- Focus must move only as a direct, deterministic result of a user action.
+- No timeouts, animations, or async side-effects that silently move focus.

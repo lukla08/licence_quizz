@@ -1,0 +1,100 @@
+# ClickUp Simplifier — Cursor AI Rules
+
+## Project overview
+
+A personal, keyboard-driven desktop/web client that replaces the ClickUp web UI
+for a single power user. The app works on a **local copy** of ClickUp data and
+syncs selectively back to ClickUp. Speed, keyboard predictability, and a lean
+interface are the core promises. PRD: `context/foundation/prd.md`.
+
+## Domain model — non-negotiable rules
+
+1. **Milestone → Task hierarchy is strict.** Milestones and tasks are NEVER
+   rendered or stored at the same level. Every task belongs to exactly one
+   milestone. Tasks without a milestone go under a virtual "no milestone" node —
+   they are never hidden.
+
+2. **Named sync sets.** Synchronization is split into exactly two named sets for
+   the MVP:
+   - *Podstawowe słowniki* — dictionaries (spaces, folders, lists); slow cadence.
+   - *Zadania* — tasks; fast, incremental cadence.
+   Each set independently tracks `lastSuccess`, `lastFailure`, and `errorDescription`.
+   A later failure does NOT erase the last-known-good timestamp.
+
+3. **Write-back is explicit, never automatic.** Local changes reach ClickUp only
+   after the user reviews and approves a pending-changes queue. No silent auto-push.
+
+4. **ClickUp auth = personal API token only.** No OAuth for MVP. The token is
+   stored on-device; treat it as a secret (never log, never embed in source).
+
+5. **Single user, no app-level auth.** The app has no login screen. One person,
+   one device.
+
+## Functional requirements summary (FR reference)
+
+| ID     | Description                                              | Priority    |
+|--------|----------------------------------------------------------|-------------|
+| FR-001 | Store ClickUp personal API token in settings             | must-have   |
+| FR-002 | Pull whole workspace into local copy (one-time full, then incremental) | must-have |
+| FR-003 | Named sync sets with independent cadences                | must-have   |
+| FR-004 | On-demand sync trigger per set                           | must-have   |
+| FR-005 | Context selector (folder / space scope)                  | must-have   |
+| FR-006 | Restore last context on launch                           | nice-to-have|
+| FR-007 | Full keyboard operability — no operation requires a mouse| must-have   |
+| FR-008 | Strict milestone→task nesting in UI                      | must-have   |
+| FR-009 | Create milestone                                         | must-have   |
+| FR-010 | Assign task to milestone                                 | must-have   |
+| FR-011 | View milestone release note (list of resolved tasks)     | nice-to-have|
+| FR-012 | Change task status / mark complete                       | must-have   |
+| FR-013 | Edit task title and description                          | must-have   |
+| FR-014 | Reviewed write-back to ClickUp (explicit approve step)   | must-have   |
+| FR-015 | Sync management panel listing all sync sets              | must-have   |
+| FR-016 | Show lastSuccess + lastFailure timestamp per sync set    | must-have   |
+| FR-017 | Show error description when last run failed              | must-have   |
+| FR-018 | Immediate on-demand trigger from sync panel              | must-have   |
+| FR-019 | Per-set auto-sync frequency (presets + custom input)     | must-have   |
+
+## Non-functional constraints
+
+- Navigation and read operations on the local copy: **≤ 100 ms** perceived latency,
+  even at full-workspace scale.
+- Keyboard actions must be deterministic: same key, same result, every time.
+  **No surprise focus jumps** — focus moves only as a direct result of a user action.
+- Changes to ClickUp only after explicit user approval (write-back safety).
+- Task changes in ClickUp reflected in local copy **within minutes** when connected.
+
+## Non-goals (do NOT implement)
+
+- Multi-user, roles, sharing, collaboration
+- ClickUp feature parity (comments, attachments, Gantt, automations, dashboards)
+- Creating/editing spaces, folders, or lists (dictionaries are read-only)
+- Offline operation
+- OAuth flow
+- User-defined custom sync sets (catalogue is fixed at two for MVP)
+
+## Tech stack status
+
+Stack is **deliberately deferred** — multiple parallel explorations:
+- Native web
+- Flutter (web + desktop target)
+- Native desktop in Java
+
+The architecture must support a **shared core** (local DB + sync engine + domain
+model) with **swappable frontends**. When adding code, keep business logic out of
+UI layers so clients can be swapped.
+
+## Open questions (do not assume answers)
+
+1. How are tasks with no milestone node presented in the hierarchy? (virtual node proposed, not locked)
+2. Exact UX for the write-back review step (pending-changes queue + confirm — shape TBD)
+3. Predefined preset cadences for FR-019 (values not yet chosen)
+
+## Coding guidelines
+
+- No comments explaining *what* code does — names should do that. Only comment
+  *why* when there is a hidden constraint or non-obvious invariant.
+- No premature abstractions. Three similar lines beat a helper added for hypothetical reuse.
+- No error handling for impossible cases. Validate only at system boundaries
+  (user input, ClickUp API responses).
+- The ClickUp API token must never appear in logs, console output, or error messages.
+- Sync state (lastSuccess/lastFailure/errorDescription) must survive app restart.

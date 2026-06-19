@@ -1,0 +1,33 @@
+---
+description: Domain model rules — always apply when writing any feature code
+globs:
+alwaysApply: true
+---
+
+# Domain model — hard rules
+
+## Hierarchy
+- Tasks are ALWAYS nested under a milestone. No exceptions.
+- Milestones and tasks are NEVER at the same tree level.
+- Tasks with no milestone → virtual "no milestone" node. They must stay visible.
+
+## Sync sets
+Two named sets, fixed for MVP:
+- `Podstawowe słowniki` — dictionaries (spaces, folders, lists), slow cadence
+- `Zadania` — tasks, fast incremental cadence
+
+Each set carries independent state:
+```
+lastSuccessAt: Timestamp | null
+lastFailureAt: Timestamp | null
+errorDescription: string | null
+```
+A new failure does NOT overwrite `lastSuccessAt`. Both timestamps coexist.
+
+## Write-back safety
+Local changes stage in a **pending queue**. They reach ClickUp only after the
+user explicitly approves them. Never push automatically, never push silently.
+
+## Token security
+The ClickUp personal API token is the only secret. Never log it, never embed it
+in source, never include it in error messages shown to the user.
