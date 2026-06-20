@@ -274,9 +274,9 @@ przez Flyway V1; kolejne zmiany (S-02 status zestawów, kadencje) dojdą jako V2
 
 #### Automated
 
-- [x] 1.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9) w `server/`, z Dockerem
-- [x] 1.2 Test ładowania kontekstu na Postgresie z Testcontainers (datasource + Spring Data JDBC + Flyway wpięte)
-- [x] 1.3 Istniejący test kontekstu F-01 nadal przechodzi
+- [x] 1.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9) w `server/`, z Dockerem — c54a229
+- [x] 1.2 Test ładowania kontekstu na Postgresie z Testcontainers (datasource + Spring Data JDBC + Flyway wpięte) — c54a229
+- [x] 1.3 Istniejący test kontekstu F-01 nadal przechodzi — c54a229
 
 #### Manual
 
