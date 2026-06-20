@@ -303,11 +303,11 @@ Brak istniejących danych do migracji. Pierwszy kod funkcjonalny w rdzeniu.
 
 #### Automated
 
-- [ ] 2.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/`
-- [ ] 2.2 Test sukcesu: 200 → `OK` z id/username; `Authorization` = token bez `Bearer`, trafiony `GET /user`
-- [ ] 2.3 Test 401 → `TOKEN_REJECTED` z opisem
-- [ ] 2.4 Test braku tokenu → `NOT_CONFIGURED` bez ruchu sieciowego
-- [ ] 2.5 Test błędu sieci → `UNREACHABLE`
+- [x] 2.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/`
+- [x] 2.2 Test sukcesu: 200 → `OK` z id/username; `Authorization` = token bez `Bearer`, trafiony `GET /user`
+- [x] 2.3 Test 401 → `TOKEN_REJECTED` z opisem
+- [x] 2.4 Test braku tokenu → `NOT_CONFIGURED` bez ruchu sieciowego
+- [x] 2.5 Test błędu sieci → `UNREACHABLE`
 
 #### Manual
 
