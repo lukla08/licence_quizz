@@ -1,1 +1,1 @@
-Resume F-01 phase 2](project_resume_clickup_f01_phase2.md)
+ /10x-implement local-copy-persistence phase 2
