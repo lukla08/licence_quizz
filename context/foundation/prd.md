@@ -93,6 +93,20 @@ out for now (may grow later).
 - Selected changes round-trip to ClickUp without creating duplicates
 - (If FR-006 is built) the chosen context is restored on the next launch
 
+### US-02: User manages synchronization and trusts the freshness of the local copy
+
+- **Given** a configured ClickUp token and at least one sync set that has run before
+- **When** the user opens the sync management panel
+- **Then** they see, per sync set, the last successful and last failed sync time (with
+  the error description on failure), can trigger any set immediately, and can set each
+  set's automatic frequency from presets or a custom value
+
+#### Acceptance Criteria
+- Each sync set shows its last-success and last-failure time independently
+- A failed sync shows a readable error description
+- Immediate (on-demand) trigger works regardless of the set's schedule
+- A changed frequency (preset or custom value) is persisted and takes effect
+
 ## Functional Requirements
 
 ### Sync & local copy
@@ -232,7 +246,6 @@ implementation concern.
 3. **What are the predefined auto-sync frequency presets?** — FR-019 commits to
    presets + custom entry, but the concrete preset cadences (and sensible
    defaults per set) are not yet chosen. Owner: user.
-4. **Does sync management warrant its own user story?** — FR-015..FR-019 are
-   fully specified, but only US-01 (milestone organization) carries a
-   Given/When/Then. A sync-management acceptance story may be worth adding.
-   Owner: user / downstream.
+4. **Does sync management warrant its own user story?** — ✅ Resolved (2026-06-20):
+   yes. Added **US-02** (sync management) with Given/When/Then + acceptance criteria
+   covering FR-015..FR-019. Owner: user / downstream.
