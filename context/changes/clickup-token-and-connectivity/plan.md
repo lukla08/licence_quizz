@@ -288,16 +288,16 @@ Brak istniejących danych do migracji. Pierwszy kod funkcjonalny w rdzeniu.
 
 #### Automated
 
-- [x] 1.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/`
-- [x] 1.2 Test odczyt-po-zapisie: `saveToken` → `getToken` zwraca ten sam token
-- [x] 1.3 Test walidacji: pusty/whitespace token rzuca; plik nie powstaje
-- [x] 1.4 `getToken()` bez pliku zwraca `Optional.empty()`
-- [x] 1.5 Test atomowości: brak pliku tymczasowego po zapisie; istniejący settings.json nietracony
+- [x] 1.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/` — a380fb3
+- [x] 1.2 Test odczyt-po-zapisie: `saveToken` → `getToken` zwraca ten sam token — a380fb3
+- [x] 1.3 Test walidacji: pusty/whitespace token rzuca; plik nie powstaje — a380fb3
+- [x] 1.4 `getToken()` bez pliku zwraca `Optional.empty()` — a380fb3
+- [x] 1.5 Test atomowości: brak pliku tymczasowego po zapisie; istniejący settings.json nietracony — a380fb3
 
 #### Manual
 
-- [x] 1.6 Token obecny w pliku JSON pod skonfigurowaną ścieżką
-- [x] 1.7 Plik przeżywa restart aplikacji
+- [x] 1.6 Token obecny w pliku JSON pod skonfigurowaną ścieżką — a380fb3
+- [x] 1.7 Plik przeżywa restart aplikacji — a380fb3
 
 ### Phase 2: Klient ClickUp + sprawdzenie łączności
 
