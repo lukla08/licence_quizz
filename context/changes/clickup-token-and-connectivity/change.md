@@ -2,7 +2,7 @@
 change_id: clickup-token-and-connectivity
 title: "ClickUp token + uwierzytelniona łączność z API"
 roadmap_ref: F-01
-status: implementing
+status: implemented
 created: 2026-06-20
 updated: 2026-06-20
 prd_refs:

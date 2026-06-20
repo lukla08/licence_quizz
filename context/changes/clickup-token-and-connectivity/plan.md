@@ -311,8 +311,8 @@ Brak istniejących danych do migracji. Pierwszy kod funkcjonalny w rdzeniu.
 
 #### Manual
 
-- [ ] 2.6 Realny prawidłowy token → `OK` z tożsamością
-- [ ] 2.7 Błędny token → `TOKEN_REJECTED`
+- [x] 2.6 Realny prawidłowy token → `OK` z tożsamością
+- [x] 2.7 Błędny token → `TOKEN_REJECTED`
 
 ### Phase 3: Powierzchnia REST + spięcie
 
@@ -324,5 +324,5 @@ Brak istniejących danych do migracji. Pierwszy kod funkcjonalny w rdzeniu.
 
 #### Manual
 
-- [ ] 3.4 `PUT` tokenu + `GET` connectivity przez curl zwraca tożsamość
-- [ ] 3.5 Aplikacja startuje czysto; domyślny test kontekstu nadal przechodzi
+- [x] 3.4 `PUT` tokenu + `GET` connectivity przez curl zwraca tożsamość
+- [x] 3.5 Aplikacja startuje czysto; domyślny test kontekstu nadal przechodzi
