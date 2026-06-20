@@ -50,6 +50,7 @@ recommended_defaults:
     rust: tauri
     js: <none>
     dart: flutter
+    java: javafx
   cli:
     rust: rust
     go: go
@@ -841,6 +842,38 @@ starters:
     deployment_defaults: [self-host, github-releases]
     bootstrapper_confidence: verified
     alternatives_to_consider: []
+
+  javafx:
+    name: "JavaFX (desktop via OpenJFX Maven archetype)"
+    language_family: java
+    description: >
+      Native JVM desktop UI toolkit. Scaffolded via the OpenJFX Maven archetype
+      (javafx-archetype-simple). Rich desktop controls, FXML layouts, runs on
+      Windows/macOS/Linux on the JVM. Pairs naturally with a Java/Spring core.
+    fit:
+      - "native Java desktop client on the JVM"
+      - "team already invested in the Java/Spring ecosystem"
+    gotchas:
+      - "JavaFX modules must be on the module path; native installers via jpackage are extra setup"
+      - "smaller training-data corpus than web frameworks; agents stumble more on FXML/binding specifics"
+      - "archetype defaults maven.compiler release to 11 even with a newer javafx-version; bump compiler source/target/release to match the JDK or the build won't compile"
+      - "javafx-version must match the JDK (JavaFX 21 needs JDK 17+; for JDK 11 use JavaFX 11/17); recent maven-compiler-plugin (3.13+) needs Maven 3.6.3+"
+    agent_friendly:
+      typed: true
+      convention_based: true
+      popular_in_training: false
+      well_documented: true
+    stars: 3000
+    last_updated: 2026-01-15
+    docs_url: "https://openjfx.io/"
+    for: [desktop-app]
+    tags: [java, jvm, desktop, javafx]
+    toolchain:
+      package_manager: maven
+    cmd_template: "mvn -B archetype:generate -DarchetypeGroupId=org.openjfx -DarchetypeArtifactId=javafx-archetype-simple -DarchetypeVersion=0.0.6 -DgroupId=com.example -DartifactId={name} -Dversion=0.0.1 -Djavafx-version=21"
+    deployment_defaults: [self-host, github-releases]
+    bootstrapper_confidence: best-effort
+    alternatives_to_consider: [tauri, flutter]
 
   flutter:
     name: "Flutter"
