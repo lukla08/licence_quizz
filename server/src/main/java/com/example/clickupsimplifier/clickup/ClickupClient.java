@@ -2,6 +2,7 @@ package com.example.clickupsimplifier.clickup;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 @Component
 public class ClickupClient {
@@ -18,6 +19,9 @@ public class ClickupClient {
                 .header("Authorization", token)
                 .retrieve()
                 .body(UserResponse.class);
+        if (response == null || response.user() == null) {
+            throw new RestClientException("Nieoczekiwana odpowiedź ClickUp: brak pola user");
+        }
         return new ClickupUser(String.valueOf(response.user().id()), response.user().username());
     }
 
