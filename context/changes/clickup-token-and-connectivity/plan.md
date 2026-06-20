@@ -303,11 +303,11 @@ Brak istniejących danych do migracji. Pierwszy kod funkcjonalny w rdzeniu.
 
 #### Automated
 
-- [x] 2.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/`
-- [x] 2.2 Test sukcesu: 200 → `OK` z id/username; `Authorization` = token bez `Bearer`, trafiony `GET /user`
-- [x] 2.3 Test 401 → `TOKEN_REJECTED` z opisem
-- [x] 2.4 Test braku tokenu → `NOT_CONFIGURED` bez ruchu sieciowego
-- [x] 2.5 Test błędu sieci → `UNREACHABLE`
+- [x] 2.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/` — e46ce95
+- [x] 2.2 Test sukcesu: 200 → `OK` z id/username; `Authorization` = token bez `Bearer`, trafiony `GET /user` — e46ce95
+- [x] 2.3 Test 401 → `TOKEN_REJECTED` z opisem — e46ce95
+- [x] 2.4 Test braku tokenu → `NOT_CONFIGURED` bez ruchu sieciowego — e46ce95
+- [x] 2.5 Test błędu sieci → `UNREACHABLE` — e46ce95
 
 #### Manual
 
@@ -318,9 +318,9 @@ Brak istniejących danych do migracji. Pierwszy kod funkcjonalny w rdzeniu.
 
 #### Automated
 
-- [ ] 3.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/`
-- [ ] 3.2 Test kontrolera: `PUT` poprawnego tokenu → 204; pusty → 400
-- [ ] 3.3 `GET /api/clickup/connectivity` → 200 z polem `status` odwzorowującym wynik serwisu
+- [x] 3.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/`
+- [x] 3.2 Test kontrolera: `PUT` poprawnego tokenu → 204; pusty → 400
+- [x] 3.3 `GET /api/clickup/connectivity` → 200 z polem `status` odwzorowującym wynik serwisu
 
 #### Manual
 
