@@ -318,9 +318,9 @@ Brak istniejących danych do migracji. Pierwszy kod funkcjonalny w rdzeniu.
 
 #### Automated
 
-- [x] 3.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/`
-- [x] 3.2 Test kontrolera: `PUT` poprawnego tokenu → 204; pusty → 400
-- [x] 3.3 `GET /api/clickup/connectivity` → 200 z polem `status` odwzorowującym wynik serwisu
+- [x] 3.1 Testy przechodzą wg toolchainu (JAVA_HOME21 + MAVEN_HOME9), w `server/` — 8cd7647
+- [x] 3.2 Test kontrolera: `PUT` poprawnego tokenu → 204; pusty → 400 — 8cd7647
+- [x] 3.3 `GET /api/clickup/connectivity` → 200 z polem `status` odwzorowującym wynik serwisu — 8cd7647
 
 #### Manual
 
