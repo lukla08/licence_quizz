@@ -44,6 +44,12 @@
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- Boot 4 wydzielił autokonfigurację Flyway do osobnego modułu;
+		     sam flyway-core nie wciąga jej tranzytywnie (analogia do test-slice'ów). -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-flyway</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
