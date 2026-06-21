@@ -17,20 +17,19 @@ ClickUp Simplifier is a personal, keyboard-driven ClickUp client: a local Spring
 - `server/` — Spring Boot 4 core (@server/pom.xml)
 - `clients/web/` — Vite + React + TypeScript (@clients/web/package.json)
 - `clients/flutter/` — Flutter web/desktop (@clients/flutter/pubspec.yaml)
-- `clients/desktop-java/` — JavaFX (@clients/desktop-java/pom.xml)
-- `scripts/` — Java build/run wrappers (@scripts/README.md)
+- `clients/desktop-java/` — JavaFX (@clients/desktop-java/pom.xml); `build`/`run` wrappers next to `pom.xml`
 - `context/foundation/` — PRD, tech-stack hand-offs, roadmap
 - `.cursorrules`, `.cursor/rules/` — domain and style rules for agents
 
 ## Build, Test, and Development Commands
 
-Java targets **Java 21**. Default shell `JAVA_HOME` / `mvn` may be JDK 11 / Maven 3.5.0 — use wrappers requiring `JAVA_HOME21` and `MAVEN_HOME9` (@scripts/README.md): `scripts/build-server.sh`, `scripts/run-server.sh`, `scripts/build-desktop.sh`, `scripts/run-desktop.sh`.
+Java targets **Java 21**. Default shell `JAVA_HOME` / `mvn` may be JDK 11 / Maven 3.5.0 — use the `build`/`run` wrappers that sit next to each `pom.xml` and require `JAVA_HOME21` and `MAVEN_HOME9`: `server/build.sh`, `server/run.sh`, `clients/desktop-java/build.sh`, `clients/desktop-java/run.sh` (`.cmd` equivalents for cmd.exe / PowerShell).
 
 Web (`clients/web/`): `npm run dev`, `npm run build`, `npm run lint`.
 
 Flutter (`clients/flutter/`): `flutter pub get`, `flutter analyze`, `flutter build web` (or `flutter run -d windows`).
 
-Spring tests: `scripts/build-server.sh clean test`.
+Spring tests: `server/build.sh clean test`.
 
 ## Coding Style & Naming
 
