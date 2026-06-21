@@ -297,13 +297,13 @@ przez Flyway V1; kolejne zmiany (S-02 status zestawów, kadencje) dojdą jako V2
 
 #### Automated
 
-- [ ] 3.1 `mvn test` (toolchain + Docker) przechodzi
-- [ ] 3.2 Zapis→odczyt każdej encji zwraca te same dane
-- [ ] 3.3 Idempotencja upsertu: ponowny upsert tego samego id aktualizuje, nie duplikuje
-- [ ] 3.4 Milestone: null („no milestone") i self-ref task-milestone zapisują się/odczytują; `is_milestone` zachowane
-- [ ] 3.5 Relacje FK + zapytania nawigacyjne (taski po liście, milestone'y po liście) poprawne
-- [ ] 3.6 Trwałość: dane przeżywają ponowne odpytanie repo
+- [x] 3.1 `mvn test` (toolchain + Docker) przechodzi
+- [x] 3.2 Zapis→odczyt każdej encji zwraca te same dane
+- [x] 3.3 Idempotencja upsertu: ponowny upsert tego samego id aktualizuje, nie duplikuje
+- [x] 3.4 Milestone: null („no milestone") i self-ref task-milestone zapisują się/odczytują; `is_milestone` zachowane
+- [x] 3.5 Relacje FK + zapytania nawigacyjne (taski po liście, milestone'y po liście) poprawne
+- [x] 3.6 Trwałość: dane przeżywają ponowne odpytanie repo
 
 #### Manual
 
-- [ ] 3.7 (opcjonalnie) wiersze poprawne w lokalnym Postgresie po ręcznym seedzie
+- [x] 3.7 (opcjonalnie) wiersze poprawne w lokalnym Postgresie po ręcznym seedzie
