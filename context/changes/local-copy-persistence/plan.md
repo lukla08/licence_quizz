@@ -280,18 +280,18 @@ przez Flyway V1; kolejne zmiany (S-02 status zestawów, kadencje) dojdą jako V2
 
 #### Manual
 
-- [x] 1.4 Aplikacja startuje przeciw lokalnie zainstalowanemu Postgresowi bez błędów
+- [x] 1.4 Aplikacja startuje przeciw lokalnie zainstalowanemu Postgresowi bez błędów — e73b648
 
 ### Phase 2: Migracja schematu (V1)
 
 #### Automated
 
-- [x] 2.1 `mvn test` (toolchain + Docker) przechodzi; Flyway aplikuje V1 czysto na Testcontainers
-- [x] 2.2 Test schematu potwierdza cztery tabele + kluczowe kolumny/ograniczenia
+- [x] 2.1 `mvn test` (toolchain + Docker) przechodzi; Flyway aplikuje V1 czysto na Testcontainers — e73b648
+- [x] 2.2 Test schematu potwierdza cztery tabele + kluczowe kolumny/ograniczenia — e73b648
 
 #### Manual
 
-- [x] 2.3 W lokalnym Postgresie widoczne tabele + indeksy po starcie
+- [x] 2.3 W lokalnym Postgresie widoczne tabele + indeksy po starcie — e73b648
 
 ### Phase 3: Model domenowy + repozytoria + idempotentny upsert
 
