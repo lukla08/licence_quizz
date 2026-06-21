@@ -3,6 +3,7 @@ package com.example.clickupsimplifier.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,6 +21,12 @@ class SchemaMigrationTest {
 
     @Autowired
     JdbcClient jdbcClient;
+
+    @BeforeEach
+    void cleanTestData() {
+        // CASCADE usunie folder/list/task pod space s1
+        jdbcClient.sql("DELETE FROM space WHERE id = 's1'").update();
+    }
 
     @Test
     void createsFourWorkspaceTables() {
@@ -49,6 +56,40 @@ class SchemaMigrationTest {
     @Test
     void isMilestoneIsNotNull() {
         assertThat(isNullable("task", "is_milestone")).isFalse();
+    }
+
+    // --- V2 assertions ---
+
+    @Test
+    void taskCarriesParentIdColumn() {
+        assertThat(columnsOf("task")).contains("parent_id");
+        assertThat(isNullable("task", "parent_id")).isTrue();
+    }
+
+    @Test
+    void syncSetTableExistsWithTwoRows() {
+        assertThat(columnsOf("sync_set")).contains("name", "last_synced_at");
+
+        List<String> names = jdbcClient
+                .sql("SELECT name FROM sync_set ORDER BY name")
+                .query(String.class)
+                .list();
+        assertThat(names).containsExactly("dictionaries", "tasks");
+    }
+
+    @Test
+    void deleteListCascadesToTasks() {
+        // Seed minimal hierarchy
+        jdbcClient.sql("INSERT INTO space VALUES ('s1','Space')").update();
+        jdbcClient.sql("INSERT INTO folder VALUES ('f1','s1','Folder')").update();
+        jdbcClient.sql("INSERT INTO list VALUES ('l1','List','s1','f1')").update();
+        jdbcClient.sql("INSERT INTO task (id,list_id,name,is_milestone) VALUES ('t1','l1','Task',false)").update();
+
+        jdbcClient.sql("DELETE FROM list WHERE id = 'l1'").update();
+
+        long taskCount = jdbcClient.sql("SELECT count(*) FROM task WHERE id = 't1'")
+                .query(Long.class).single();
+        assertThat(taskCount).isZero();
     }
 
     private List<String> columnsOf(String table) {

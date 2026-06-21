@@ -11,6 +11,7 @@ public record Task(
         String status,
         String description,
         boolean isMilestone,
-        String milestoneId
+        String milestoneId,
+        String parentId
 ) {
 }
