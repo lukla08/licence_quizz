@@ -1,10 +1,10 @@
 ---
 change_id: local-copy-persistence
 title: Minimalna lokalna warstwa trwałości na kopię workspace
-status: impl_reviewed
+status: archived
 created: 2026-06-20
 updated: 2026-06-21
-archived_at: null
+archived_at: 2026-06-21T12:59:15Z
 ---
 
 ## Notes

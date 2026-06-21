@@ -3,7 +3,7 @@ project: ClickUp Simplifier
 version: 1
 status: active
 created: 2026-06-20
-updated: 2026-06-20
+updated: 2026-06-21
 prd_version: 1
 main_goal: low-complexity
 top_blocker: decisions
@@ -42,7 +42,7 @@ akceptacja US-01 domyka się dopiero z bezpiecznym zapisem zwrotnym (S-05).
 | ID    | Change ID                          | Outcome (użytkownik …)                                              | Prerequisites | PRD refs                          | Status   |
 | ----- | ---------------------------------- | ------------------------------------------------------------------- | ------------- | --------------------------------- | -------- |
 | F-01  | clickup-token-and-connectivity     | (fundament) przechowuje token i ma uwierzytelnioną łączność z API   | —             | FR-001                            | ready    |
-| F-02  | local-copy-persistence             | (fundament) ma minimalny lokalny magazyn na kopię workspace         | —             | FR-008, NFR                       | ready    |
+| F-02  | local-copy-persistence             | (fundament) ma minimalny lokalny magazyn na kopię workspace         | —             | FR-008, NFR                       | done     |
 | F-03  | first-client-shell                 | (fundament) klient JavaFX wpięty w rdzeń, baza nawigacji klawiaturą  | —             | FR-007, US-01                     | ready    |
 | S-01  | full-workspace-pull                | pobiera całą przestrzeń ClickUp do lokalnej kopii (2 zestawy sync)  | F-01, F-02    | FR-002, FR-003                    | proposed |
 | S-02  | incremental-sync-and-manual-trigger| utrzymuje kopię aktualną przyrostowo i wyzwala zestaw na żądanie    | S-01          | FR-004                            | proposed |
@@ -105,7 +105,7 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Inwestycja „głęboko" — warstwa danych to serce produktu i bramka NFR (~100 ms na całym workspace). Trzymana minimalnie: nie budujemy całego schematu z góry, tylko kontrakt pod pierwszy pull; S-01 od razu go przez realny pull ćwiczy.
-- **Status:** ready
+- **Status:** done
 
 ### F-03: Wpięcie pierwszego klienta (JavaFX / desktop-java)
 
@@ -269,3 +269,5 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 ## Done
 
 (Pusta przy pierwszej generacji. `/10x-archive` dopisuje tu wpis — i przełącza `Status` elementu na `done` — gdy zmiana o pasującym `Change ID` jest archiwizowana.)
+
+- **F-02: (fundament) istnieje minimalny lokalny magazyn na kopię workspace (słowniki, milestone'y, zadania) odwzorowujący dwupoziomowy model milestone→task — tylko encje potrzebne pierwszemu pullowi.** — Archived 2026-06-21 → `context/archive/2026-06-20-local-copy-persistence/`. Lesson: —.
