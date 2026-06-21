@@ -508,28 +508,28 @@ lokalnego Postgres z bazą `simplifier` (jak w F-02).
 
 #### Automated
 
-- [x] 1.1 `mvn test` (toolchain + Docker) przechodzi; V2 migruje czysto na Testcontainers Postgres
-- [x] 1.2 Test schematu: `parent_id` na task, `sync_set` z 2 rows, CASCADE FK (delete list → taski kaskadowo)
-- [x] 1.3 Test integracyjny SyncSet: zapis, `updateLastSyncedAt`, odczyt `lastSyncedAt`
-- [x] 1.4 Istniejące testy F-02 (`RepositoryIntegrationTest`) nadal przechodzą
+- [x] 1.1 `mvn test` (toolchain + Docker) przechodzi; V2 migruje czysto na Testcontainers Postgres — ea38e33
+- [x] 1.2 Test schematu: `parent_id` na task, `sync_set` z 2 rows, CASCADE FK (delete list → taski kaskadowo) — ea38e33
+- [x] 1.3 Test integracyjny SyncSet: zapis, `updateLastSyncedAt`, odczyt `lastSyncedAt` — ea38e33
+- [x] 1.4 Istniejące testy F-02 (`RepositoryIntegrationTest`) nadal przechodzą — ea38e33
 
 #### Manual
 
-- [x] 1.5 Schemat V2 zaaplikowany na lokalnym Postgresie; `sync_set` zawiera 2 rows; `parent_id` widoczny w psql
+- [x] 1.5 Schemat V2 zaaplikowany na lokalnym Postgresie; `sync_set` zawiera 2 rows; `parent_id` widoczny w psql — ea38e33
 
 ### Phase 2: ClickUp Workspace API Client
 
 #### Automated
 
-- [ ] 2.1 `mvn test` (toolchain) przechodzi
-- [ ] 2.2 `ClickupWorkspaceClientTest`: path/header/params poprawne dla każdej z 6 metod
-- [ ] 2.3 Paginacja tasków: mock 2 strony → wynik = concat obu
-- [ ] 2.4 `since` param: `date_updated_gt` = epochMillis od Instant w query
-- [ ] 2.5 429 retry: 3 próby, backoff 1s→2s→4s; po wyczerpaniu wyjątek propagowany
+- [x] 2.1 `mvn test` (toolchain) przechodzi
+- [x] 2.2 `ClickupWorkspaceClientTest`: path/header/params poprawne dla każdej z 6 metod
+- [x] 2.3 Paginacja tasków: mock 2 strony → wynik = concat obu
+- [x] 2.4 `since` param: `date_updated_gt` = epochMillis od Instant w query
+- [x] 2.5 429 retry: 3 próby, backoff 1s→2s→4s; po wyczerpaniu wyjątek propagowany
 
 #### Manual
 
-- [ ] 2.6 (opcjonalne) `getTeams` z realnym tokenem zwraca workspace name
+- [x] 2.6 (opcjonalne) `getTeams` z realnym tokenem zwraca workspace name
 
 ### Phase 3: WorkspaceSyncService
 
