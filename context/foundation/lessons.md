@@ -22,3 +22,10 @@
 - **Problem**: Współrzędne z Testcontainers 1.x — `org.testcontainers:postgresql`, `org.testcontainers:junit-jupiter` — nie istnieją w 2.x → Maven: "'dependencies.dependency.version' ... is missing" (BOM nie ma tych artefaktów, więc wersja nieзаrządzana). Kosztowało nieudany `scanning for projects` w F-02 (faza 1).
 - **Rule**: W Testcontainers 2.x moduły mają prefiks `testcontainers-`: `org.testcontainers:testcontainers-postgresql`, `org.testcontainers:testcontainers-junit-jupiter` (i analogicznie inne). Wersje zarządza BOM Spring Boota (bez ręcznego pinowania). Klasy kontenerów zostają w starych pakietach (`org.testcontainers.containers.PostgreSQLContainer` działa); wiązanie z aplikacją przez `spring-boot-testcontainers` + `@ServiceConnection`. `mvn test` z Testcontainers wymaga działającego Dockera.
 - **Applies to**: plan, implement, plan-review
+
+## Spring Boot 4 = autokonfiguracja Flyway w osobnym module (`spring-boot-flyway`)
+
+- **Context**: Dowolny `pom.xml` w `server/` na Spring Boot 4.x — każda faza dodająca Flyway lub migracje.
+- **Problem**: `flyway-core` obecny w zależnościach, ale Flyway nie odpala żadnej migracji przy starcie (zero linii „Migrating schema" w logach, tabele nie powstają). Boot 4 wydzielił autokonfigurację Flyway z `flyway-core` do osobnego modułu — bez niego `FlywayAutoConfiguration` nie jest rejestrowana. Kosztowało to nieudane testy schematu w F-02 (faza 2).
+- **Rule**: W Spring Boot 4.x dodaj `org.springframework.boot:spring-boot-flyway` obok `org.flywaydb:flyway-core` i `flyway-database-postgresql`. Wersją zarządza BOM (bez ręcznego pinowania). Bez tego modułu Flyway jest na ścieżce klas, ale nie uruchamia migracji.
+- **Applies to**: plan, implement, plan-review

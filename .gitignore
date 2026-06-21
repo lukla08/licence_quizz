@@ -68,6 +68,8 @@ desktop.ini
 
 # from spring
 HELP.md
+# Spring Boot lokalne credentials (nie commitowac)
+application-local.properties
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

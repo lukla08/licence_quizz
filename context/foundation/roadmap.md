@@ -132,6 +132,8 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Najryzykowniejsza integracja (zewnętrzne API, rozmiar całego workspace); sekwencjonowana wcześnie, bo cała reszta konsumuje lokalną kopię. Pełny pull jednorazowy, potem przyrost (S-02).
+- **Implementation note (z review F-02):** Warstwa serwisowa sync MUSI owijać cały import workspace w `@Transactional`. Repozytoria F-02 mają `@Modifying` bez `@Transactional` (każdy upsert = osobna transakcja) — przy crash w połowie pull'a DB będzie w stanie częściowym. @Transactional należy do warstwy serwisowej, nie do repozytorium.
+- **Implementation note (z review F-02):** FK w schemacie V1 nie mają `ON DELETE CASCADE`. Przy "replace all" sync usunięcie `space` bez kolejności leaf→root (task→list→folder→space) spowoduje FK violation. Plan S-01 musi zaplanować kolejność delecji lub dodać Flyway V2 z `CASCADE`.
 - **Status:** proposed
 
 ### S-02: Synchronizacja przyrostowa + ręczne wyzwalanie
