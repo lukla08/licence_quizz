@@ -282,6 +282,41 @@ pod S-02. In-memory `SyncJobStatus` śledzi stan bieżącego job'a.
 
 ### Changes Required
 
+#### 0. Migracja Flyway V3 + oznaczenie list do sync
+
+**File**: `server/src/main/resources/db/migration/V3__list_sync_enabled.sql`
+
+**Intent**: Dodać pole opt-in `sync_enabled` do tabeli `list`. Domyślnie `false` — użytkownik
+świadomie oznacza, które listy uczestniczą w synchronizacji tasków. Synchronizacja słowników
+(spaces/folders/lists) pozostaje niezmieniona i zawsze pobiera pełny workspace.
+
+**Contract**:
+- `ALTER TABLE list ADD COLUMN sync_enabled boolean NOT NULL DEFAULT false`
+
+**File**: `server/src/main/java/com/example/clickupsimplifier/persistence/WorkspaceList.java`
+
+**Intent**: Odzwierciedlić `sync_enabled` w rekordzie domenowym.
+
+**Contract**: Dodaj pole `boolean syncEnabled` do rekordu. Mapowanie camelCase→snake_case przez
+konwencję Spring Data JDBC — bez adnotacji. Przy upsertcie nowo pobranych list z ClickUp
+`sync_enabled = false` (domyślna wartość DB, nie ma w DTO ClickUp).
+
+**File**: `server/src/main/java/com/example/clickupsimplifier/persistence/WorkspaceListRepository.java`
+
+**Intent**: Dostarczyć metody filtrowania i zarządzania znacznikiem sync per lista.
+
+**Contract**:
+- `@Query("SELECT * FROM list WHERE sync_enabled = true") List<WorkspaceList> findAllSyncEnabled()`
+- `@Modifying @Query("UPDATE list SET sync_enabled = :enabled WHERE id = :id") void updateSyncEnabled(@Param("id") String id, @Param("enabled") boolean enabled)`
+
+**Testy (rozszerzenie istniejących)**:
+- `SchemaMigrationTest`: kolumna `sync_enabled` na `list`, wartość domyślna `false` potwierdzona
+  przez INSERT + SELECT bez podania pola
+- `RepositoryIntegrationTest` (lub nowy `WorkspaceListRepositoryTest`): `findAllSyncEnabled`
+  zwraca tylko listy z `sync_enabled = true`; `updateSyncEnabled` zmienia wartość; upsert
+  istniejącej listy nie resetuje wartości `sync_enabled` ustawionej ręcznie (upsert nie dotyka
+  pola `sync_enabled`)
+
 #### 1. @EnableAsync konfiguracja
 
 **File**: `server/src/main/java/com/example/clickupsimplifier/config/AsyncConfig.java`
@@ -333,10 +368,11 @@ executorem wystarczy dla S-01.
 - `syncSetRepo.updateLastSyncedAt("dictionaries", Instant.now())`
 
 `@Transactional void syncTasks(String token, String teamId, @Nullable Instant since)`:
-- Fetch `allLists` z DB (po `syncDictionaries` — tylko żyjące listy)
-- Per lista: `getTasks(token, list.id(), since)` → flatten (top-level tasks + subtaski z
-  dziedziczonym `listId` rodzica)
-- Gdy `since == null`: `taskRepo.deleteStaleByListId(listId, freshTaskIds)` per lista
+- Fetch `enabledLists = listRepo.findAllSyncEnabled()` z DB (po `syncDictionaries`; listy
+  z `sync_enabled = false` nie są dotykane — ich taski nie są pobierane ani kasowane)
+- Per lista z `enabledLists`: `getTasks(token, list.id(), since)` → flatten (top-level tasks
+  + subtaski z dziedziczonym `listId` rodzica)
+- Gdy `since == null`: `taskRepo.deleteStaleByListId(listId, freshTaskIds)` per enabled lista
 - Upsert: top-level taski (parent=null) PRZED subtaskami (parent!=null) — FK `parent_id`
   wymaga istnienia rodzica
 - `syncSetRepo.updateLastSyncedAt("tasks", Instant.now())`
@@ -351,11 +387,14 @@ API i aktualizację `sync_set`.
 **Contract**: Testy z Testcontainers Postgres (real DB) + mockiem `ClickupWorkspaceClient`
 (Mockito). Scenariusze:
 - Pełny pull (since=null): po pull'u DB zawiera dokładnie to co zwrócił mock; wcześniej
-  zaseedowane stale encje usuniete
+  zaseedowane stale encje usunięte
 - Przyrostowy (since=Instant): brak delete; upsertowane tylko zwrócone przez mock
 - Błąd w `getSpaces` (wyjątek): status FAILED; `last_synced_at` nie zaktualizowane;
   poprzednie dane w DB nienaruszone (rollback @Transactional)
 - Subtaski: `list_id` odziedziczone z rodzica; parent-task upsertowany przed subtaskiem
+- Filtrowanie sync_enabled: dwie listy zaseedowane w DB — jedna `sync_enabled = true`, druga
+  `false`; po sync mock `getTasks` wołany tylko raz (dla enabled); DB zawiera taski tylko
+  enabled listy; taski disabled listy (jeśli wcześniej zaseedowane) pozostają nienaruszone
 
 ### Success Criteria
 
@@ -388,6 +427,7 @@ cały przepływ end-to-end z mockowanym ClickUp HTTP i realnym Postgres.
 **File**: `server/src/main/java/com/example/clickupsimplifier/sync/SyncController.java`
 
 **Intent**: Wystawić dwa endpointy synchronizacji; kontroler tylko deleguje — zero logiki.
+Oba triggery synkują wyłącznie listy z `sync_enabled = true` (zachowanie w `WorkspaceSyncService`).
 
 **Contract**:
 - `POST /api/sync/full-pull`:
@@ -397,7 +437,32 @@ cały przepływ end-to-end z mockowanym ClickUp HTTP i realnym Postgres.
   `{ state, message, startedAt, completedAt, syncSets: { dictionaries: { lastSyncedAt }, tasks: { lastSyncedAt } } }`
   Dane z `syncService.getStatus()` (in-memory) + `syncSetRepo.findAll()` (persystowane timestamps).
 
-#### 2. SyncStatusResponse DTO
+#### 2. ListController
+
+**File**: `server/src/main/java/com/example/clickupsimplifier/sync/ListController.java`
+
+**Intent**: Wystawić zarządzanie znacznikiem `sync_enabled` per lista. Użytkownik przeglądą
+wszystkie listy z workspace i oznacza te, których taski mają być synchronizowane.
+
+**Contract**:
+- `GET /api/lists` → 200 z listą `ListResponse`:
+  `[{ id, name, syncEnabled, folderId, spaceId }]` — wszystkie listy z lokalnej kopii,
+  posortowane `space_id, folder_id NULLS LAST, name`. Źródło: `workspaceListRepo.findAll()`
+  + ręczne sortowanie lub ORDER BY w query.
+- `PUT /api/lists/{id}/sync-enabled` z body `{ "enabled": true|false }` → 204;
+  `workspaceListRepo.updateSyncEnabled(id, enabled)`.
+  Gdy lista o danym `id` nie istnieje: 404.
+
+**File**: `server/src/main/java/com/example/clickupsimplifier/sync/dto/ListResponse.java`
+
+**Contract**: Rekord `ListResponse(String id, String name, boolean syncEnabled,
+@Nullable String folderId, String spaceId)`.
+
+**File**: `server/src/main/java/com/example/clickupsimplifier/sync/dto/SyncEnabledRequest.java`
+
+**Contract**: Rekord `SyncEnabledRequest(boolean enabled)` — body `PUT` requesta.
+
+#### 3. SyncStatusResponse DTO
 
 **File**: `server/src/main/java/com/example/clickupsimplifier/sync/dto/SyncStatusResponse.java`
 
@@ -408,7 +473,7 @@ persystowanymi timestamps per zestaw.
 startedAt`, `@Nullable Instant completedAt`, `Map<String, SyncSetStatus> syncSets` gdzie
 `SyncSetStatus(Instant lastSyncedAt)`.
 
-#### 3. SyncController test (slice)
+#### 4. SyncController test (slice)
 
 **File**: `server/src/test/java/com/example/clickupsimplifier/sync/SyncControllerTest.java`
 
@@ -420,7 +485,19 @@ Scenariusze:
 - `POST /api/sync/full-pull` gdy RUNNING → 409
 - `GET /api/sync/status` → 200 z polem `state` i `syncSets`
 
-#### 4. Integracyjny smoke-test end-to-end
+#### 5. ListController test (slice)
+
+**File**: `server/src/test/java/com/example/clickupsimplifier/sync/ListControllerTest.java`
+
+**Intent**: Zweryfikować kontrakty HTTP endpointów zarządzania znacznikiem.
+
+**Contract**: `@WebMvcTest(ListController.class)` + `@MockitoBean WorkspaceListRepository`.
+Scenariusze:
+- `GET /api/lists` → 200 z poprawną listą (mock repozytorium zwraca 2 listy)
+- `PUT /api/lists/{id}/sync-enabled` z `{ "enabled": true }` → 204; `updateSyncEnabled` wywołane
+- `PUT /api/lists/{id}/sync-enabled` gdy lista nie istnieje (mock zwraca 0 rows updated) → 404
+
+#### 6. Integracyjny smoke-test end-to-end
 
 **File**: `server/src/test/java/com/example/clickupsimplifier/sync/FullPullIntegrationTest.java`
 
@@ -428,12 +505,15 @@ Scenariusze:
 HTTP ClickUp i realnym Postgres (Testcontainers).
 
 **Contract**: `@SpringBootTest` + `PostgresTestcontainersConfig` + `MockRestServiceServer`
-(mock API ClickUp zwraca minimalny workspace: 1 space, 1 folder, 1 list, 2 taski w tym 1
-subtask). Kroki:
+(mock API ClickUp zwraca minimalny workspace: 1 space, 1 folder, 2 listy, 2 taski w tym 1
+subtask — taski należą do pierwszej listy). Kroki:
 1. Zapisz token przez `SettingsStore`
-2. `POST /api/sync/full-pull` → 202
-3. Czekaj na `COMPLETED` (polling `GET /api/sync/status`, max 5 s)
-4. Asercja DB: space/folder/list/task/subtask obecne z poprawnymi polami;
+2. `POST /api/sync/full-pull` → 202; czekaj na `COMPLETED` (polling max 5 s)
+3. Asercja: space/folder/listy obecne w DB; task tabela pusta (żadna lista nie ma
+   `sync_enabled = true` po pierwszym pull'u)
+4. `PUT /api/lists/{firstListId}/sync-enabled` z `{ "enabled": true }` → 204
+5. `POST /api/sync/full-pull` → 202; czekaj na `COMPLETED`
+6. Asercja DB: task/subtask pierwszej listy obecne; taski drugiej listy nieobecne;
    `sync_set.last_synced_at` nie-null dla obu rows
 
 ### Success Criteria
@@ -442,14 +522,18 @@ subtask). Kroki:
 
 - `mvn test` (toolchain + Docker) przechodzi
 - `SyncControllerTest`: 202/409 na trigger, 200 z poprawnym body na status
-- `FullPullIntegrationTest`: end-to-end przepływ COMPLETED; DB wypełniona; `last_synced_at` zapisane
+- `ListControllerTest`: GET lista, PUT enable → 204, PUT nieistniejąca → 404
+- `FullPullIntegrationTest`: pełny scenariusz z sync_enabled — po pierwszym pull task tabela
+  pusta; po oznaczeniu listy i drugim pull taski enabled listy obecne, disabled listy puste
 
 #### Manual Verification
 
-- `POST /api/sync/full-pull` z realnym tokenem ClickUp → 202
-- Polling `GET /api/sync/status` do `COMPLETED` (może potrwać 1-3 min przy dużym workspace)
-- Tabele w lokalnym Postgresie wypełnione danymi z ClickUp
-- Ponowny pull: stale encje (jeśli wcześniej zaseedowane manualnie) usunięte; `last_synced_at` zaktualizowane
+- `POST /api/sync/full-pull` z realnym tokenem → 202; polling → COMPLETED;
+  task tabela pusta (żadna lista nie oznaczona)
+- `GET /api/lists` → lista wszystkich list z `syncEnabled: false`
+- `PUT /api/lists/{id}/sync-enabled` z `{"enabled": true}` dla wybranej listy → 204
+- Ponowny `POST /api/sync/full-pull` → COMPLETED; `SELECT count(*) FROM task` > 0 dla
+  oznaczonej listy; `last_synced_at` zaktualizowane
 
 **Implementation Note**: Po automatycznej weryfikacji zatrzymaj się na ręczne potwierdzenie domknięcia S-01.
 
@@ -462,20 +546,25 @@ subtask). Kroki:
 - `ClickupWorkspaceClientTest`: per-endpoint path/auth/params, paginacja, `since` param,
   429 retry (backoff + fail-after-3) — `MockRestServiceServer`
 - `SyncControllerTest`: HTTP contracts — `@WebMvcTest`
-- `WorkspaceSyncServiceTest`: replace-all logika, rollback na błąd, subtaski — Testcontainers + Mockito
+- `ListControllerTest`: GET /api/lists, PUT /api/lists/{id}/sync-enabled — `@WebMvcTest`
+- `WorkspaceSyncServiceTest`: replace-all logika, rollback na błąd, subtaski,
+  filtrowanie sync_enabled — Testcontainers + Mockito
 
 ### Integration Tests
 
-- `FullPullIntegrationTest`: end-to-end z mock ClickUp HTTP + real Postgres
-- `SchemaMigrationTest` (rozszerzony): V2 schemat poprawny
+- `FullPullIntegrationTest`: end-to-end z mock ClickUp HTTP + real Postgres; weryfikuje
+  scenariusz sync_enabled (oznacz listę → pull → taski present)
+- `SchemaMigrationTest` (rozszerzony): V2 + V3 schemat poprawny; `sync_enabled` default false
 
 ### Manual Testing Steps
 
-1. `POST /api/sync/full-pull` (curl lub klient REST) z realnym tokenem — oczekuj 202
-2. Polling `GET /api/sync/status` co kilka sekund — oczekuj przejścia do COMPLETED
-3. Sprawdź tabele w psql: `SELECT count(*) FROM task`, `SELECT * FROM sync_set`
-4. Usuń manualnie 1 space z `psql` (jako symulacja stale); ponowny pull → space powróci
-5. Drugi pull bez zmian w ClickUp → idempotentny (takie same dane, zaktualizowany `last_synced_at`)
+1. `POST /api/sync/full-pull` (curl lub klient REST) z realnym tokenem — oczekuj 202 + COMPLETED;
+   `SELECT count(*) FROM task` = 0 (żadna lista nieoznaczona)
+2. `GET /api/lists` — przegląd dostępnych list z workspace; wybierz id jednej
+3. `PUT /api/lists/{id}/sync-enabled` z `{"enabled":true}` — 204
+4. Ponowny `POST /api/sync/full-pull` → COMPLETED; `SELECT count(*) FROM task` > 0
+5. `SELECT * FROM sync_set` — oba `last_synced_at` nie-null
+6. Usuń manualnie 1 space z `psql` (symulacja stale); ponowny pull → space powróci
 
 ## Performance Considerations
 
@@ -521,29 +610,32 @@ lokalnego Postgres z bazą `simplifier` (jak w F-02).
 
 #### Automated
 
-- [x] 2.1 `mvn test` (toolchain) przechodzi
-- [x] 2.2 `ClickupWorkspaceClientTest`: path/header/params poprawne dla każdej z 6 metod
-- [x] 2.3 Paginacja tasków: mock 2 strony → wynik = concat obu
-- [x] 2.4 `since` param: `date_updated_gt` = epochMillis od Instant w query
-- [x] 2.5 429 retry: 3 próby, backoff 1s→2s→4s; po wyczerpaniu wyjątek propagowany
+- [x] 2.1 `mvn test` (toolchain) przechodzi — f4bc50d
+- [x] 2.2 `ClickupWorkspaceClientTest`: path/header/params poprawne dla każdej z 6 metod — f4bc50d
+- [x] 2.3 Paginacja tasków: mock 2 strony → wynik = concat obu — f4bc50d
+- [x] 2.4 `since` param: `date_updated_gt` = epochMillis od Instant w query — f4bc50d
+- [x] 2.5 429 retry: 3 próby, backoff 1s→2s→4s; po wyczerpaniu wyjątek propagowany — f4bc50d
 
 #### Manual
 
-- [x] 2.6 (opcjonalne) `getTeams` z realnym tokenem zwraca workspace name
+- [x] 2.6 (opcjonalne) `getTeams` z realnym tokenem zwraca workspace name — f4bc50d
 
-### Phase 3: WorkspaceSyncService
+### Phase 3: WorkspaceSyncService + Sync Marker Schema
 
 #### Automated
 
 - [ ] 3.1 `mvn test` (toolchain + Docker) przechodzi
-- [ ] 3.2 Replace-all (since=null): stale encje usunięte; fresh upsertowane
-- [ ] 3.3 Przyrostowy (since=Instant): brak delete; upsert tylko zmienionych
-- [ ] 3.4 Błąd w fetch → rollback @Transactional; `last_synced_at` nie zaktualizowane; status FAILED
-- [ ] 3.5 Subtaski: `list_id` odziedziczone z rodzica; `parent_id` poprawny; parent upsertowany przed subtaskiem
+- [ ] 3.2 V3 migracja: kolumna `sync_enabled` na `list`, domyślna wartość `false`
+- [ ] 3.3 `WorkspaceListRepository`: `findAllSyncEnabled` zwraca tylko enabled; `updateSyncEnabled` zmienia wartość; upsert nie resetuje flagi
+- [ ] 3.4 Replace-all (since=null): stale encje słownikowe usunięte; fresh upsertowane
+- [ ] 3.5 Przyrostowy (since=Instant): brak delete; upsert tylko zmienionych
+- [ ] 3.6 Błąd w fetch → rollback @Transactional; `last_synced_at` nie zaktualizowane; status FAILED
+- [ ] 3.7 Subtaski: `list_id` odziedziczone z rodzica; `parent_id` poprawny; parent upsertowany przed subtaskiem
+- [ ] 3.8 Filtrowanie sync_enabled: mock `getTasks` wywołany tylko dla enabled listy; disabled lista nienaruszona
 
 #### Manual
 
-- [ ] 3.6 (brak ręcznego — Phase 4 odblokuje wyzwalanie)
+- [ ] 3.9 (brak ręcznego — Phase 4 odblokuje wyzwalanie)
 
 ### Phase 4: REST Surface + Integration Smoke-Test
 
@@ -551,10 +643,11 @@ lokalnego Postgres z bazą `simplifier` (jak w F-02).
 
 - [ ] 4.1 `mvn test` (toolchain + Docker) przechodzi
 - [ ] 4.2 `SyncControllerTest`: 202 gdy IDLE, 409 gdy RUNNING, 200 ze stanem na GET status
-- [ ] 4.3 `FullPullIntegrationTest`: end-to-end COMPLETED; DB wypełniona; `last_synced_at` zapisane dla obu zestawów
+- [ ] 4.3 `ListControllerTest`: GET lista, PUT enable → 204, PUT nieistniejąca → 404
+- [ ] 4.4 `FullPullIntegrationTest`: po pierwszym pull task pusta; po oznaczeniu listy i drugim pull taski enabled listy obecne
 
 #### Manual
 
-- [ ] 4.4 `POST /api/sync/full-pull` z realnym tokenem → 202; polling → COMPLETED
-- [ ] 4.5 Tabele w lokalnym Postgresie wypełnione danymi z ClickUp
-- [ ] 4.6 Ponowny pull: idempotentny; `last_synced_at` zaktualizowane
+- [ ] 4.5 `POST /api/sync/full-pull` z realnym tokenem → 202; COMPLETED; task pusta (żadna lista nieoznaczona)
+- [ ] 4.6 `GET /api/lists` → lista list z `syncEnabled: false`; `PUT` dla wybranej → 204
+- [ ] 4.7 Ponowny pull → taski oznaczonej listy w DB; `last_synced_at` zaktualizowane
