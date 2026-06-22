@@ -119,7 +119,7 @@ class WorkspaceSyncServiceTest {
 
         service.triggerPull(null);
 
-        await().atMost(10, TimeUnit.SECONDS)
+        await().atMost(2, TimeUnit.SECONDS)
                 .until(() -> service.getStatus().state() == SyncState.FAILED);
 
         assertThat(service.getStatus().state()).isEqualTo(SyncState.FAILED);

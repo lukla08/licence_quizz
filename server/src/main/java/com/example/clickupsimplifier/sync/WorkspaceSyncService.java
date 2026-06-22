@@ -68,17 +68,22 @@ public class WorkspaceSyncService {
 
     @Async
     public void triggerPull(@Nullable Instant since) {
-        currentStatus.set(SyncJobStatus.running(Instant.now()));
+        Instant startedAt = Instant.now();
+        currentStatus.set(SyncJobStatus.running(startedAt));
         try {
             String token = settingsStore.getToken()
                     .orElseThrow(() -> new IllegalStateException("No ClickUp token configured"));
-            String teamId = workspaceClient.getTeams(token).get(0).id();
+            var teams = workspaceClient.getTeams(token);
+            if (teams.isEmpty()) throw new IllegalStateException("ClickUp account has no teams");
+            String teamId = teams.get(0).id();
+            // Two independent transactions — dictionary commit persists even if task sync fails.
             self.syncDictionaries(token, teamId, since);
             self.syncTasks(token, teamId, since);
-            currentStatus.set(SyncJobStatus.completed(Instant.now()));
+            log.info("Workspace sync completed (since={})", since);
+            currentStatus.set(SyncJobStatus.completed(startedAt, Instant.now()));
         } catch (Exception e) {
             log.error("Workspace sync failed", e);
-            currentStatus.set(SyncJobStatus.failed(e.getMessage(), Instant.now()));
+            currentStatus.set(SyncJobStatus.failed(e.getMessage(), startedAt, Instant.now()));
         }
     }
 

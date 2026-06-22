@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
 
 public interface WorkspaceListRepository extends CrudRepository<WorkspaceList, String> {
 
@@ -25,7 +24,7 @@ public interface WorkspaceListRepository extends CrudRepository<WorkspaceList, S
 
     @Modifying
     @Query("UPDATE list SET sync_enabled = :enabled WHERE id = :id")
-    int updateSyncEnabled(@Param("id") String id, @Param("enabled") boolean enabled);
+    int updateSyncEnabled(String id, boolean enabled);
 
     List<WorkspaceList> findBySpaceId(String spaceId);
 

@@ -19,11 +19,11 @@ public record SyncJobStatus(
         return new SyncJobStatus(SyncState.RUNNING, null, startedAt, null);
     }
 
-    public static SyncJobStatus completed(Instant completedAt) {
-        return new SyncJobStatus(SyncState.COMPLETED, null, null, completedAt);
+    public static SyncJobStatus completed(Instant startedAt, Instant completedAt) {
+        return new SyncJobStatus(SyncState.COMPLETED, null, startedAt, completedAt);
     }
 
-    public static SyncJobStatus failed(String message, Instant completedAt) {
-        return new SyncJobStatus(SyncState.FAILED, message, null, completedAt);
+    public static SyncJobStatus failed(String message, Instant startedAt, Instant completedAt) {
+        return new SyncJobStatus(SyncState.FAILED, message, startedAt, completedAt);
     }
 }
