@@ -641,13 +641,13 @@ lokalnego Postgres z bazą `simplifier` (jak w F-02).
 
 #### Automated
 
-- [x] 4.1 `mvn test` (toolchain + Docker) przechodzi
-- [x] 4.2 `SyncControllerTest`: 202 gdy IDLE, 409 gdy RUNNING, 200 ze stanem na GET status
-- [x] 4.3 `ListControllerTest`: GET lista, PUT enable → 204, PUT nieistniejąca → 404
-- [x] 4.4 `FullPullIntegrationTest`: po pierwszym pull task pusta; po oznaczeniu listy i drugim pull taski enabled listy obecne
+- [x] 4.1 `mvn test` (toolchain + Docker) przechodzi — 810cca5
+- [x] 4.2 `SyncControllerTest`: 202 gdy IDLE, 409 gdy RUNNING, 200 ze stanem na GET status — 810cca5
+- [x] 4.3 `ListControllerTest`: GET lista, PUT enable → 204, PUT nieistniejąca → 404 — 810cca5
+- [x] 4.4 `FullPullIntegrationTest`: po pierwszym pull task pusta; po oznaczeniu listy i drugim pull taski enabled listy obecne — 810cca5
 
 #### Manual
 
-- [ ] 4.5 `POST /api/sync/full-pull` z realnym tokenem → 202; COMPLETED; task pusta (żadna lista nieoznaczona)
-- [ ] 4.6 `GET /api/lists` → lista list z `syncEnabled: false`; `PUT` dla wybranej → 204
-- [ ] 4.7 Ponowny pull → taski oznaczonej listy w DB; `last_synced_at` zaktualizowane
+- [x] 4.5 `POST /api/sync/full-pull` z realnym tokenem → 202; COMPLETED; task pusta (żadna lista nieoznaczona) — 810cca5
+- [x] 4.6 `GET /api/lists` → lista list z `syncEnabled: false`; `PUT` dla wybranej → 204 — 810cca5
+- [x] 4.7 Ponowny pull → taski oznaczonej listy w DB; `last_synced_at` zaktualizowane — 810cca5
