@@ -624,18 +624,18 @@ lokalnego Postgres z bazą `simplifier` (jak w F-02).
 
 #### Automated
 
-- [ ] 3.1 `mvn test` (toolchain + Docker) przechodzi
-- [ ] 3.2 V3 migracja: kolumna `sync_enabled` na `list`, domyślna wartość `false`
-- [ ] 3.3 `WorkspaceListRepository`: `findAllSyncEnabled` zwraca tylko enabled; `updateSyncEnabled` zmienia wartość; upsert nie resetuje flagi
-- [ ] 3.4 Replace-all (since=null): stale encje słownikowe usunięte; fresh upsertowane
-- [ ] 3.5 Przyrostowy (since=Instant): brak delete; upsert tylko zmienionych
-- [ ] 3.6 Błąd w fetch → rollback @Transactional; `last_synced_at` nie zaktualizowane; status FAILED
-- [ ] 3.7 Subtaski: `list_id` odziedziczone z rodzica; `parent_id` poprawny; parent upsertowany przed subtaskiem
-- [ ] 3.8 Filtrowanie sync_enabled: mock `getTasks` wywołany tylko dla enabled listy; disabled lista nienaruszona
+- [x] 3.1 `mvn test` (toolchain + Docker) przechodzi
+- [x] 3.2 V3 migracja: kolumna `sync_enabled` na `list`, domyślna wartość `false`
+- [x] 3.3 `WorkspaceListRepository`: `findAllSyncEnabled` zwraca tylko enabled; `updateSyncEnabled` zmienia wartość; upsert nie resetuje flagi
+- [x] 3.4 Replace-all (since=null): stale encje słownikowe usunięte; fresh upsertowane
+- [x] 3.5 Przyrostowy (since=Instant): brak delete; upsert tylko zmienionych
+- [x] 3.6 Błąd w fetch → rollback @Transactional; `last_synced_at` nie zaktualizowane; status FAILED
+- [x] 3.7 Subtaski: `list_id` odziedziczone z rodzica; `parent_id` poprawny; parent upsertowany przed subtaskiem
+- [x] 3.8 Filtrowanie sync_enabled: mock `getTasks` wywołany tylko dla enabled listy; disabled lista nienaruszona
 
 #### Manual
 
-- [ ] 3.9 (brak ręcznego — Phase 4 odblokuje wyzwalanie)
+- [x] 3.9 (brak ręcznego — Phase 4 odblokuje wyzwalanie)
 
 ### Phase 4: REST Surface + Integration Smoke-Test
 

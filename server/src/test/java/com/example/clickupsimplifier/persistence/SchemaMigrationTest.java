@@ -82,7 +82,7 @@ class SchemaMigrationTest {
         // Seed minimal hierarchy
         jdbcClient.sql("INSERT INTO space VALUES ('s1','Space')").update();
         jdbcClient.sql("INSERT INTO folder VALUES ('f1','s1','Folder')").update();
-        jdbcClient.sql("INSERT INTO list VALUES ('l1','List','s1','f1')").update();
+        jdbcClient.sql("INSERT INTO list (id, name, space_id, folder_id) VALUES ('l1','List','s1','f1')").update();
         jdbcClient.sql("INSERT INTO task (id,list_id,name,is_milestone) VALUES ('t1','l1','Task',false)").update();
 
         jdbcClient.sql("DELETE FROM list WHERE id = 'l1'").update();
@@ -90,6 +90,26 @@ class SchemaMigrationTest {
         long taskCount = jdbcClient.sql("SELECT count(*) FROM task WHERE id = 't1'")
                 .query(Long.class).single();
         assertThat(taskCount).isZero();
+    }
+
+    // --- V3 assertions ---
+
+    @Test
+    void listCarriesSyncEnabledColumn() {
+        assertThat(columnsOf("list")).contains("sync_enabled");
+        assertThat(isNullable("list", "sync_enabled")).isFalse();
+    }
+
+    @Test
+    void syncEnabledDefaultIsFalse() {
+        jdbcClient.sql("INSERT INTO space VALUES ('s1','Space')").update();
+        jdbcClient.sql("INSERT INTO list (id, name, space_id) VALUES ('l1','List','s1')").update();
+
+        Boolean enabled = jdbcClient
+                .sql("SELECT sync_enabled FROM list WHERE id = 'l1'")
+                .query(Boolean.class)
+                .single();
+        assertThat(enabled).isFalse();
     }
 
     private List<String> columnsOf(String table) {

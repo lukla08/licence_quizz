@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 public interface WorkspaceListRepository extends CrudRepository<WorkspaceList, String> {
 
+    // sync_enabled intentionally excluded from DO UPDATE — preserves user-set value.
     @Modifying
     @Query("INSERT INTO list (id, name, space_id, folder_id) VALUES (:id, :name, :spaceId, :folderId) " +
            "ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, space_id = EXCLUDED.space_id, folder_id = EXCLUDED.folder_id")
@@ -17,6 +19,13 @@ public interface WorkspaceListRepository extends CrudRepository<WorkspaceList, S
     @Modifying
     @Query("DELETE FROM list WHERE id NOT IN (:ids)")
     void deleteByIdNotIn(Collection<String> ids);
+
+    @Query("SELECT * FROM list WHERE sync_enabled = true")
+    List<WorkspaceList> findAllSyncEnabled();
+
+    @Modifying
+    @Query("UPDATE list SET sync_enabled = :enabled WHERE id = :id")
+    int updateSyncEnabled(@Param("id") String id, @Param("enabled") boolean enabled);
 
     List<WorkspaceList> findBySpaceId(String spaceId);
 
