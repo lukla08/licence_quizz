@@ -26,6 +26,9 @@ public interface WorkspaceListRepository extends CrudRepository<WorkspaceList, S
     @Query("UPDATE list SET sync_enabled = :enabled WHERE id = :id")
     int updateSyncEnabled(String id, boolean enabled);
 
+    @Query("SELECT * FROM list ORDER BY space_id, folder_id NULLS LAST, name")
+    List<WorkspaceList> findAllOrderedForDisplay();
+
     List<WorkspaceList> findBySpaceId(String spaceId);
 
     List<WorkspaceList> findByFolderId(String folderId);

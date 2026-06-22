@@ -641,10 +641,10 @@ lokalnego Postgres z bazą `simplifier` (jak w F-02).
 
 #### Automated
 
-- [ ] 4.1 `mvn test` (toolchain + Docker) przechodzi
-- [ ] 4.2 `SyncControllerTest`: 202 gdy IDLE, 409 gdy RUNNING, 200 ze stanem na GET status
-- [ ] 4.3 `ListControllerTest`: GET lista, PUT enable → 204, PUT nieistniejąca → 404
-- [ ] 4.4 `FullPullIntegrationTest`: po pierwszym pull task pusta; po oznaczeniu listy i drugim pull taski enabled listy obecne
+- [x] 4.1 `mvn test` (toolchain + Docker) przechodzi
+- [x] 4.2 `SyncControllerTest`: 202 gdy IDLE, 409 gdy RUNNING, 200 ze stanem na GET status
+- [x] 4.3 `ListControllerTest`: GET lista, PUT enable → 204, PUT nieistniejąca → 404
+- [x] 4.4 `FullPullIntegrationTest`: po pierwszym pull task pusta; po oznaczeniu listy i drugim pull taski enabled listy obecne
 
 #### Manual
 
