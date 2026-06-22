@@ -1,7 +1,7 @@
 ---
 id: full-workspace-pull
 title: Pełny pull workspace do lokalnej kopii
-status: implemented
+status: impl_reviewed
 created: 2026-06-21
 updated: 2026-06-22
 roadmap_id: S-01

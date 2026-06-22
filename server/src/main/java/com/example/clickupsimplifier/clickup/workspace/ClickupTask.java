@@ -1,7 +1,6 @@
 package com.example.clickupsimplifier.clickup.workspace;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record ClickupTask(
@@ -10,8 +9,7 @@ public record ClickupTask(
         StatusRef status,
         String description,
         boolean milestone,
-        String parent,
-        List<ClickupTask> subtasks) {
+        String parent) {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record StatusRef(String status) {}

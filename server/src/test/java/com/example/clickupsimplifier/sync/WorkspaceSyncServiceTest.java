@@ -3,9 +3,6 @@ package com.example.clickupsimplifier.sync;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.example.clickupsimplifier.clickup.workspace.ClickupFolder;
@@ -24,8 +21,11 @@ import com.example.clickupsimplifier.persistence.TaskRepository;
 import com.example.clickupsimplifier.persistence.WorkspaceListRepository;
 import com.example.clickupsimplifier.settings.SettingsStore;
 import com.example.clickupsimplifier.sync.SyncJobStatus.SyncState;
+import com.example.clickupsimplifier.sync.WorkspaceSyncService.DictionaryPayload;
+import com.example.clickupsimplifier.sync.WorkspaceSyncService.FolderEntry;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,7 +48,6 @@ class WorkspaceSyncServiceTest {
     @MockitoBean ClickupWorkspaceClient workspaceClient;
     @MockitoBean SettingsStore settingsStore;
 
-    // Minimal workspace: 1 team → 1 space → 1 folder → list L1 + folderless list L2
     private static final String TEAM_ID = "team1";
     private static final String SPACE_ID = "space1";
     private static final String FOLDER_ID = "folder1";
@@ -62,6 +61,14 @@ class WorkspaceSyncServiceTest {
             new ClickupRef(SPACE_ID), new ClickupList.FolderRef(FOLDER_ID, false));
     private final ClickupList list2 = new ClickupList(LIST_ID_2, "List 2",
             new ClickupRef(SPACE_ID), new ClickupList.FolderRef("hidden", true));
+
+    private DictionaryPayload minimalPayload() {
+        return new DictionaryPayload(
+                List.of(space),
+                List.of(new FolderEntry(FOLDER_ID, SPACE_ID, "Folder")),
+                List.of(list1, list2)
+        );
+    }
 
     @BeforeEach
     void clean() {
@@ -84,10 +91,9 @@ class WorkspaceSyncServiceTest {
 
     @Test
     void fullPull_upsertsAllDictionaries() {
-        // Pre-seed stale entities that should be removed
         spaces.insertOrUpdate("stale-space", "Stale");
 
-        service.syncDictionaries("tok", TEAM_ID, null);
+        service.writeDictionaries(minimalPayload(), null);
 
         assertThat(spaces.findById(SPACE_ID)).isPresent();
         assertThat(spaces.findById("stale-space")).isEmpty();
@@ -104,7 +110,7 @@ class WorkspaceSyncServiceTest {
     void incrementalPull_noDeleteCalled() {
         spaces.insertOrUpdate("extra-space", "Extra");
 
-        service.syncDictionaries("tok", TEAM_ID, Instant.now());
+        service.writeDictionaries(minimalPayload(), Instant.now());
 
         // Stale entity remains — no delete in incremental mode
         assertThat(spaces.findById("extra-space")).isPresent();
@@ -123,6 +129,7 @@ class WorkspaceSyncServiceTest {
                 .until(() -> service.getStatus().state() == SyncState.FAILED);
 
         assertThat(service.getStatus().state()).isEqualTo(SyncState.FAILED);
+        assertThat(service.getStatus().message()).isEqualTo("API down");
         assertThat(syncSets.findById("dictionaries"))
                 .hasValueSatisfying(s -> assertThat(s.lastSyncedAt()).isNull());
     }
@@ -131,18 +138,14 @@ class WorkspaceSyncServiceTest {
 
     @Test
     void subtasksInheritListIdAndParentIsUpsertedFirst() {
-        // Seed list1 in DB and mark it sync-enabled
         spaces.insertOrUpdate(SPACE_ID, "Space");
         folders.insertOrUpdate(FOLDER_ID, SPACE_ID, "Folder");
         lists.insertOrUpdate(LIST_ID_1, "List 1", SPACE_ID, FOLDER_ID);
-        lists.updateSyncEnabled(LIST_ID_1, true);
 
-        ClickupTask parent = new ClickupTask("t1", "Parent", null, null, false, null, List.of());
-        ClickupTask subtask = new ClickupTask("t2", "Sub", null, null, false, "t1", List.of());
-        when(workspaceClient.getTasks(eq("tok"), eq(LIST_ID_1), any()))
-                .thenReturn(List.of(parent, subtask));
+        ClickupTask parent = new ClickupTask("t1", "Parent", null, null, false, null);
+        ClickupTask subtask = new ClickupTask("t2", "Sub", null, null, false, "t1");
 
-        service.syncTasks("tok", TEAM_ID, null);
+        service.writeTasks(Map.of(LIST_ID_1, List.of(parent, subtask)), null);
 
         assertThat(tasks.findById("t1")).hasValueSatisfying(t -> {
             assertThat(t.listId()).isEqualTo(LIST_ID_1);
@@ -154,28 +157,26 @@ class WorkspaceSyncServiceTest {
         });
     }
 
-    // ---- 3.8 sync_enabled filtering -------------------------------------
+    // ---- 3.8 sync_enabled filtering: disabled list tasks are not touched ----
 
     @Test
-    void syncTasks_onlyFetchesEnabledLists() {
+    void writeTasks_onlyProcessesListsPassedIn() {
         spaces.insertOrUpdate(SPACE_ID, "Space");
         folders.insertOrUpdate(FOLDER_ID, SPACE_ID, "Folder");
         lists.insertOrUpdate(LIST_ID_1, "List 1", SPACE_ID, FOLDER_ID);
         lists.insertOrUpdate(LIST_ID_2, "List 2", SPACE_ID, null);
-        lists.updateSyncEnabled(LIST_ID_1, true);
-        // LIST_ID_2 remains sync_enabled = false
 
+        // Pre-seed a task on list2 (disabled list — not included in the map)
         tasks.insertOrUpdate("existing-t", LIST_ID_2, "Existing", null, null, false, null, null);
 
-        ClickupTask t = new ClickupTask("t1", "Task", null, null, false, null, List.of());
-        when(workspaceClient.getTasks(eq("tok"), eq(LIST_ID_1), any())).thenReturn(List.of(t));
+        ClickupTask t = new ClickupTask("t1", "Task", null, null, false, null);
 
-        service.syncTasks("tok", TEAM_ID, null);
+        // Only list1 is passed in (simulating that fetchTaskData only fetched enabled lists)
+        service.writeTasks(Map.of(LIST_ID_1, List.of(t)), null);
 
-        // Tasks of LIST_ID_1 fetched and upserted
+        // list1 tasks written
         assertThat(tasks.findById("t1")).isPresent();
-        // LIST_ID_2 getTasks never called, existing task untouched
-        verify(workspaceClient, never()).getTasks(any(), eq(LIST_ID_2), any());
+        // list2 task untouched (list2 was not in the map)
         assertThat(tasks.findById("existing-t")).isPresent();
     }
 }

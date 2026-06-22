@@ -29,7 +29,7 @@ class SyncControllerTest {
 
     @Test
     void triggerFullPull_whenIdle_returns202() throws Exception {
-        when(syncService.getStatus()).thenReturn(SyncJobStatus.idle());
+        when(syncService.tryClaimRunning()).thenReturn(true);
 
         mockMvc.perform(post("/api/sync/full-pull"))
                 .andExpect(status().isAccepted());
@@ -39,7 +39,7 @@ class SyncControllerTest {
 
     @Test
     void triggerFullPull_whenRunning_returns409() throws Exception {
-        when(syncService.getStatus()).thenReturn(SyncJobStatus.running(Instant.now()));
+        when(syncService.tryClaimRunning()).thenReturn(false);
 
         mockMvc.perform(post("/api/sync/full-pull"))
                 .andExpect(status().isConflict());

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
 import java.time.Instant;
@@ -24,43 +25,53 @@ public class ClickupWorkspaceClient {
     }
 
     public List<ClickupTeam> getTeams(String token) {
-        return withRetry(() -> restClient.get()
+        TeamsResponse body = withRetry(() -> restClient.get()
                 .uri("/team")
                 .header("Authorization", token)
                 .retrieve()
-                .body(TeamsResponse.class)).teams();
+                .body(TeamsResponse.class));
+        if (body == null) throw new RestClientException("Unexpected ClickUp response: missing teams body");
+        return body.teams();
     }
 
     public List<ClickupSpace> getSpaces(String token, String teamId) {
-        return withRetry(() -> restClient.get()
+        SpacesResponse body = withRetry(() -> restClient.get()
                 .uri("/team/{teamId}/space?archived=false", teamId)
                 .header("Authorization", token)
                 .retrieve()
-                .body(SpacesResponse.class)).spaces();
+                .body(SpacesResponse.class));
+        if (body == null) throw new RestClientException("Unexpected ClickUp response: missing spaces body");
+        return body.spaces();
     }
 
     public List<ClickupFolder> getFolders(String token, String spaceId) {
-        return withRetry(() -> restClient.get()
+        FoldersResponse body = withRetry(() -> restClient.get()
                 .uri("/space/{spaceId}/folder?archived=false", spaceId)
                 .header("Authorization", token)
                 .retrieve()
-                .body(FoldersResponse.class)).folders();
+                .body(FoldersResponse.class));
+        if (body == null) throw new RestClientException("Unexpected ClickUp response: missing folders body");
+        return body.folders();
     }
 
     public List<ClickupList> getFolderlessLists(String token, String spaceId) {
-        return withRetry(() -> restClient.get()
+        ListsResponse body = withRetry(() -> restClient.get()
                 .uri("/space/{spaceId}/list?archived=false", spaceId)
                 .header("Authorization", token)
                 .retrieve()
-                .body(ListsResponse.class)).lists();
+                .body(ListsResponse.class));
+        if (body == null) throw new RestClientException("Unexpected ClickUp response: missing lists body");
+        return body.lists();
     }
 
     public List<ClickupList> getListsByFolder(String token, String folderId) {
-        return withRetry(() -> restClient.get()
+        ListsResponse body = withRetry(() -> restClient.get()
                 .uri("/folder/{folderId}/list?archived=false", folderId)
                 .header("Authorization", token)
                 .retrieve()
-                .body(ListsResponse.class)).lists();
+                .body(ListsResponse.class));
+        if (body == null) throw new RestClientException("Unexpected ClickUp response: missing lists body");
+        return body.lists();
     }
 
     public List<ClickupTask> getTasks(String token, String listId, Instant since) {
@@ -82,6 +93,7 @@ public class ClickupWorkspaceClient {
                     .header("Authorization", token)
                     .retrieve()
                     .body(TasksPage.class));
+            if (tp == null) throw new RestClientException("Unexpected ClickUp response: missing tasks body");
             all.addAll(tp.tasks());
             if (tp.lastPage()) break;
             page++;
@@ -90,6 +102,7 @@ public class ClickupWorkspaceClient {
     }
 
     private <T> T withRetry(Supplier<T> call) {
+        if (retryDelaysMs.length == 0) return call.get();
         RestClientResponseException lastEx = null;
         for (int attempt = 0; attempt < retryDelaysMs.length; attempt++) {
             try {

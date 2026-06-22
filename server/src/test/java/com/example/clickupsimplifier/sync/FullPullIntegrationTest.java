@@ -108,8 +108,8 @@ class FullPullIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // Set up task responses for second pull
-        ClickupTask parent = new ClickupTask("t1", "Parent Task", null, null, false, null, List.of());
-        ClickupTask subtask = new ClickupTask("t2", "Sub Task", null, null, false, "t1", List.of());
+        ClickupTask parent = new ClickupTask("t1", "Parent Task", null, null, false, null);
+        ClickupTask subtask = new ClickupTask("t2", "Sub Task", null, null, false, "t1");
         when(workspaceClient.getTasks(eq("tok"), eq(LIST_ID_1), any()))
                 .thenReturn(List.of(parent, subtask));
 

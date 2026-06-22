@@ -1,6 +1,7 @@
 package com.example.clickupsimplifier.sync;
 
 import com.example.clickupsimplifier.clickup.workspace.ClickupList;
+import com.example.clickupsimplifier.clickup.workspace.ClickupSpace;
 import com.example.clickupsimplifier.clickup.workspace.ClickupTask;
 import com.example.clickupsimplifier.clickup.workspace.ClickupWorkspaceClient;
 import com.example.clickupsimplifier.persistence.FolderRepository;
@@ -10,6 +11,7 @@ import com.example.clickupsimplifier.persistence.TaskRepository;
 import com.example.clickupsimplifier.persistence.WorkspaceList;
 import com.example.clickupsimplifier.persistence.WorkspaceListRepository;
 import com.example.clickupsimplifier.settings.SettingsStore;
+import com.example.clickupsimplifier.sync.SyncJobStatus.SyncState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -39,7 +43,7 @@ public class WorkspaceSyncService {
     private final TaskRepository taskRepo;
     private final SyncSetRepository syncSetRepo;
 
-    // Self-injection through proxy so @Transactional on syncDictionaries/syncTasks is honoured.
+    // Self-injection through proxy so @Transactional on write methods is honoured.
     @Lazy @Autowired
     private WorkspaceSyncService self;
 
@@ -66,31 +70,59 @@ public class WorkspaceSyncService {
         return currentStatus.get();
     }
 
+    /**
+     * Atomically transitions from any non-RUNNING state to RUNNING.
+     * Returns true if this caller claimed the running slot; false if already running.
+     * Use in the controller to guard triggerPull — eliminates the check-then-act race.
+     */
+    public boolean tryClaimRunning() {
+        SyncJobStatus current;
+        do {
+            current = currentStatus.get();
+            if (current.state() == SyncState.RUNNING) return false;
+        } while (!currentStatus.compareAndSet(current, SyncJobStatus.running(Instant.now())));
+        return true;
+    }
+
     @Async
     public void triggerPull(@Nullable Instant since) {
-        Instant startedAt = Instant.now();
-        currentStatus.set(SyncJobStatus.running(startedAt));
+        // startedAt was already set atomically by tryClaimRunning(). Fall back to now()
+        // only when triggerPull is called directly (e.g. from tests).
+        SyncJobStatus existing = currentStatus.get();
+        Instant startedAt;
+        if (existing.state() == SyncState.RUNNING) {
+            startedAt = existing.startedAt();
+        } else {
+            startedAt = Instant.now();
+            currentStatus.set(SyncJobStatus.running(startedAt));
+        }
         try {
             String token = settingsStore.getToken()
                     .orElseThrow(() -> new IllegalStateException("No ClickUp token configured"));
             var teams = workspaceClient.getTeams(token);
             if (teams.isEmpty()) throw new IllegalStateException("ClickUp account has no teams");
             String teamId = teams.get(0).id();
-            // Two independent transactions — dictionary commit persists even if task sync fails.
-            self.syncDictionaries(token, teamId, since);
-            self.syncTasks(token, teamId, since);
+
+            // Fetch all dictionary data outside any transaction, then write atomically.
+            // Dictionary commit persists even if subsequent task sync fails.
+            DictionaryPayload dictPayload = fetchDictionaryData(token, teamId);
+            self.writeDictionaries(dictPayload, since);
+
+            // Enabled lists now committed; fetch tasks outside transaction, then write atomically.
+            List<WorkspaceList> enabledLists = listRepo.findAllSyncEnabled();
+            Map<String, List<ClickupTask>> tasksByList = fetchTaskData(token, enabledLists, since);
+            self.writeTasks(tasksByList, since);
+
             log.info("Workspace sync completed (since={})", since);
             currentStatus.set(SyncJobStatus.completed(startedAt, Instant.now()));
         } catch (Exception e) {
             log.error("Workspace sync failed", e);
-            currentStatus.set(SyncJobStatus.failed(e.getMessage(), startedAt, Instant.now()));
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            currentStatus.set(SyncJobStatus.failed(msg, startedAt, Instant.now()));
         }
     }
 
-    @Transactional
-    public void syncDictionaries(String token, String teamId, @Nullable Instant since) {
-        record FolderEntry(String id, String spaceId, String name) {}
-
+    private DictionaryPayload fetchDictionaryData(String token, String teamId) {
         var freshSpaces = workspaceClient.getSpaces(token, teamId);
         List<FolderEntry> freshFolders = new ArrayList<>();
         List<ClickupList> freshLists = new ArrayList<>();
@@ -103,11 +135,24 @@ public class WorkspaceSyncService {
             }
             freshLists.addAll(workspaceClient.getFolderlessLists(token, space.id()));
         }
+        return new DictionaryPayload(freshSpaces, freshFolders, freshLists);
+    }
 
+    private Map<String, List<ClickupTask>> fetchTaskData(
+            String token, List<WorkspaceList> enabledLists, @Nullable Instant since) {
+        Map<String, List<ClickupTask>> result = new LinkedHashMap<>();
+        for (WorkspaceList list : enabledLists) {
+            result.put(list.id(), workspaceClient.getTasks(token, list.id(), since));
+        }
+        return result;
+    }
+
+    @Transactional
+    public void writeDictionaries(DictionaryPayload payload, @Nullable Instant since) {
         if (since == null) {
-            Set<String> freshListIds = freshLists.stream().map(ClickupList::id).collect(Collectors.toSet());
-            Set<String> freshFolderIds = freshFolders.stream().map(FolderEntry::id).collect(Collectors.toSet());
-            Set<String> freshSpaceIds = freshSpaces.stream().map(s -> s.id()).collect(Collectors.toSet());
+            Set<String> freshListIds = payload.lists().stream().map(ClickupList::id).collect(Collectors.toSet());
+            Set<String> freshFolderIds = payload.folders().stream().map(FolderEntry::id).collect(Collectors.toSet());
+            Set<String> freshSpaceIds = payload.spaces().stream().map(ClickupSpace::id).collect(Collectors.toSet());
 
             // Leaf-first delete so CASCADE cleans children before parent rows are touched.
             if (freshListIds.isEmpty()) listRepo.deleteAll();
@@ -121,55 +166,47 @@ public class WorkspaceSyncService {
         }
 
         // Upsert root→leaf to satisfy FK constraints.
-        for (var space : freshSpaces) {
+        for (var space : payload.spaces()) {
             spaceRepo.insertOrUpdate(space.id(), space.name());
         }
-        for (var fe : freshFolders) {
+        for (var fe : payload.folders()) {
             folderRepo.insertOrUpdate(fe.id(), fe.spaceId(), fe.name());
         }
-        for (var list : freshLists) {
+        for (var list : payload.lists()) {
             listRepo.insertOrUpdate(list.id(), list.name(), list.spaceId(), list.folderId());
         }
-
         syncSetRepo.updateLastSyncedAt("dictionaries", Instant.now());
     }
 
     @Transactional
-    public void syncTasks(String token, String teamId, @Nullable Instant since) {
-        List<WorkspaceList> enabledLists = listRepo.findAllSyncEnabled();
+    public void writeTasks(Map<String, List<ClickupTask>> tasksByList, @Nullable Instant since) {
+        for (Map.Entry<String, List<ClickupTask>> entry : tasksByList.entrySet()) {
+            String listId = entry.getKey();
+            List<ClickupTask> allApiTasks = entry.getValue();
 
-        for (WorkspaceList list : enabledLists) {
-            List<ClickupTask> allApiTasks = workspaceClient.getTasks(token, list.id(), since);
-
-            List<ClickupTask> topLevel = allApiTasks.stream()
-                    .filter(t -> t.parent() == null)
-                    .toList();
-            List<ClickupTask> subTasks = allApiTasks.stream()
-                    .filter(t -> t.parent() != null)
-                    .toList();
+            List<ClickupTask> topLevel = allApiTasks.stream().filter(t -> t.parent() == null).toList();
+            List<ClickupTask> subTasks = allApiTasks.stream().filter(t -> t.parent() != null).toList();
 
             if (since == null) {
-                Set<String> freshIds = allApiTasks.stream()
-                        .map(ClickupTask::id)
-                        .collect(Collectors.toSet());
-                if (freshIds.isEmpty()) {
-                    taskRepo.deleteByListId(list.id());
-                } else {
-                    taskRepo.deleteStaleByListId(list.id(), freshIds);
-                }
+                Set<String> freshIds = allApiTasks.stream().map(ClickupTask::id).collect(Collectors.toSet());
+                if (freshIds.isEmpty()) taskRepo.deleteByListId(listId);
+                else taskRepo.deleteStaleByListId(listId, freshIds);
             }
 
             // Top-level tasks must be upserted before subtasks (FK parent_id).
             for (ClickupTask t : topLevel) {
-                taskRepo.insertOrUpdate(t.id(), list.id(), t.name(), t.statusValue(),
+                taskRepo.insertOrUpdate(t.id(), listId, t.name(), t.statusValue(),
                         t.description(), t.milestone(), null, null);
             }
             for (ClickupTask t : subTasks) {
-                taskRepo.insertOrUpdate(t.id(), list.id(), t.name(), t.statusValue(),
+                taskRepo.insertOrUpdate(t.id(), listId, t.name(), t.statusValue(),
                         t.description(), t.milestone(), null, t.parent());
             }
         }
-
         syncSetRepo.updateLastSyncedAt("tasks", Instant.now());
     }
+
+    // Package-private: used by WorkspaceSyncServiceTest in the same package.
+    record DictionaryPayload(List<ClickupSpace> spaces, List<FolderEntry> folders, List<ClickupList> lists) {}
+    record FolderEntry(String id, String spaceId, String name) {}
 }

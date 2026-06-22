@@ -2,7 +2,6 @@ package com.example.clickupsimplifier.sync;
 
 import com.example.clickupsimplifier.persistence.SyncSet;
 import com.example.clickupsimplifier.persistence.SyncSetRepository;
-import com.example.clickupsimplifier.sync.SyncJobStatus.SyncState;
 import com.example.clickupsimplifier.sync.dto.SyncStatusResponse;
 import com.example.clickupsimplifier.sync.dto.SyncStatusResponse.SyncSetStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +28,7 @@ class SyncController {
 
     @PostMapping("/full-pull")
     ResponseEntity<Void> triggerFullPull() {
-        if (syncService.getStatus().state() == SyncState.RUNNING) {
+        if (!syncService.tryClaimRunning()) {
             return ResponseEntity.status(409).build();
         }
         syncService.triggerPull(null);
