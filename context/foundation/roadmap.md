@@ -3,7 +3,7 @@ project: ClickUp Simplifier
 version: 1
 status: active
 created: 2026-06-20
-updated: 2026-06-21
+updated: 2026-06-22
 prd_version: 1
 main_goal: low-complexity
 top_blocker: decisions
@@ -44,7 +44,7 @@ akceptacja US-01 domyka się dopiero z bezpiecznym zapisem zwrotnym (S-05).
 | F-01  | clickup-token-and-connectivity     | (fundament) przechowuje token i ma uwierzytelnioną łączność z API   | —             | FR-001                            | ready    |
 | F-02  | local-copy-persistence             | (fundament) ma minimalny lokalny magazyn na kopię workspace         | —             | FR-008, NFR                       | done     |
 | F-03  | first-client-shell                 | (fundament) klient JavaFX wpięty w rdzeń, baza nawigacji klawiaturą  | —             | FR-007, US-01                     | ready    |
-| S-01  | full-workspace-pull                | pobiera całą przestrzeń ClickUp do lokalnej kopii (2 zestawy sync)  | F-01, F-02    | FR-002, FR-003                    | proposed |
+| S-01  | full-workspace-pull                | pobiera całą przestrzeń ClickUp do lokalnej kopii (2 zestawy sync)  | F-01, F-02    | FR-002, FR-003                    | done     |
 | S-02  | incremental-sync-and-manual-trigger| utrzymuje kopię aktualną przyrostowo i wyzwala zestaw na żądanie    | S-01          | FR-004                            | proposed |
 | S-03  | keyboard-milestone-task-nav        | nawiguje klawiaturą po milestone→task w wybranym kontekście         | S-01, F-03    | FR-005, FR-007, FR-008            | proposed |
 | S-04  | create-milestone-and-assign        | tworzy milestone i przypisuje zadania z klawiatury                  | S-03          | FR-009, FR-010, US-01             | proposed |
@@ -134,7 +134,7 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 - **Risk:** Najryzykowniejsza integracja (zewnętrzne API, rozmiar całego workspace); sekwencjonowana wcześnie, bo cała reszta konsumuje lokalną kopię. Pełny pull jednorazowy, potem przyrost (S-02).
 - **Implementation note (z review F-02):** Warstwa serwisowa sync MUSI owijać cały import workspace w `@Transactional`. Repozytoria F-02 mają `@Modifying` bez `@Transactional` (każdy upsert = osobna transakcja) — przy crash w połowie pull'a DB będzie w stanie częściowym. @Transactional należy do warstwy serwisowej, nie do repozytorium.
 - **Implementation note (z review F-02):** FK w schemacie V1 nie mają `ON DELETE CASCADE`. Przy "replace all" sync usunięcie `space` bez kolejności leaf→root (task→list→folder→space) spowoduje FK violation. Plan S-01 musi zaplanować kolejność delecji lub dodać Flyway V2 z `CASCADE`.
-- **Status:** proposed
+- **Status:** done
 
 ### S-02: Synchronizacja przyrostowa + ręczne wyzwalanie
 
@@ -271,3 +271,4 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 (Pusta przy pierwszej generacji. `/10x-archive` dopisuje tu wpis — i przełącza `Status` elementu na `done` — gdy zmiana o pasującym `Change ID` jest archiwizowana.)
 
 - **F-02: (fundament) istnieje minimalny lokalny magazyn na kopię workspace (słowniki, milestone'y, zadania) odwzorowujący dwupoziomowy model milestone→task — tylko encje potrzebne pierwszemu pullowi.** — Archived 2026-06-21 → `context/archive/2026-06-20-local-copy-persistence/`. Lesson: —.
+- **S-01: użytkownik konfiguruje token i pobiera całą przestrzeń ClickUp do lokalnej kopii, zorganizowanej w dwa nazwane zestawy sync („Podstawowe słowniki" i „Zadania"); może zweryfikować, że dane są na miejscu.** — Archived 2026-06-22 → `context/archive/2026-06-21-full-workspace-pull/`. Lesson: —.

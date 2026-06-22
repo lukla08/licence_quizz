@@ -1,9 +1,10 @@
 ---
 id: full-workspace-pull
 title: Pełny pull workspace do lokalnej kopii
-status: impl_reviewed
+status: archived
 created: 2026-06-21
 updated: 2026-06-22
+archived_at: 2026-06-22T12:59:17Z
 roadmap_id: S-01
 prd_refs: FR-002, FR-003
 prerequisites: [clickup-token-and-connectivity, local-copy-persistence]
