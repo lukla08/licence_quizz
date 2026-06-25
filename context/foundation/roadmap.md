@@ -3,7 +3,7 @@ project: ClickUp Simplifier
 version: 1
 status: active
 created: 2026-06-20
-updated: 2026-06-22
+updated: 2026-06-25
 prd_version: 1
 main_goal: low-complexity
 top_blocker: decisions
@@ -24,10 +24,16 @@ przewidywalny zestaw operacji bije pełną powierzchnię funkcji ClickUp.
 Synchronizacja lokalnej kopii z ClickUp (w obie strony, z bezpiecznym zapisem
 zwrotnym) jest wymaganą częścią rozwiązania, nie dodatkiem.
 
-Architektura (z `tech-stack.md`): wspólny rdzeń w Spring/Java (lokalna kopia +
-silnik sync + model domenowy) z wymiennymi klientami. Rdzeń jest client-agnostyczny.
-Kolejność klientów **rozstrzygnięta (2026-06-20, OQ-1): JavaFX (desktop-java) pierwszy,
-potem Flutter, potem web.** Logika domenowa zostaje w rdzeniu, by frontendy były wymienne.
+Architektura **(rewizja 2026-06-25, zob. `tech-stack.md`): monolit desktopowy pod
+JavaFX** — jeden uruchamialny artefakt, bez wydzielonego serwera i kontraktu
+sieciowego. Granice dziedzin zostają wydzielone, warstwy zachowane: **dwa moduły
+Maven `core` + `ui`** (parent pom), gdzie `core` = lokalna kopia + silnik sync +
+model domenowy + integracja ClickUp (Spring jako kontener DI in-process, bez
+serwera HTTP), a `ui` = JavaFX wołające `core` wprost (in-process). Baza: Postgres
+zostaje. Do rozbudowanej, wielo-klientowej / klient-serwer wersji być może wrócimy
+później — granica `ui → core` jest celowo tą samą, na której kiedyś odetnie się
+serwer od klienta. **Poprzednie założenie (wymienni klienci: JavaFX → Flutter → web)
+jest nieaktualne** (OQ-1 poniżej).
 
 ## North star
 
@@ -43,7 +49,7 @@ akceptacja US-01 domyka się dopiero z bezpiecznym zapisem zwrotnym (S-05).
 | ----- | ---------------------------------- | ------------------------------------------------------------------- | ------------- | --------------------------------- | -------- |
 | F-01  | clickup-token-and-connectivity     | (fundament) przechowuje token i ma uwierzytelnioną łączność z API   | —             | FR-001                            | ready    |
 | F-02  | local-copy-persistence             | (fundament) ma minimalny lokalny magazyn na kopię workspace         | —             | FR-008, NFR                       | done     |
-| F-03  | first-client-shell                 | (fundament) klient JavaFX wpięty w rdzeń, baza nawigacji klawiaturą  | —             | FR-007, US-01                     | ready    |
+| F-03  | first-client-shell                 | (fundament) monolit JavaFX (`core`+`ui`), baza nawigacji klawiaturą  | —             | FR-007, US-01                     | ready    |
 | S-01  | full-workspace-pull                | pobiera całą przestrzeń ClickUp do lokalnej kopii (2 zestawy sync)  | F-01, F-02    | FR-002, FR-003                    | done     |
 | S-02  | incremental-sync-and-manual-trigger| utrzymuje kopię aktualną przyrostowo i wyzwala zestaw na żądanie    | S-01          | FR-004                            | proposed |
 | S-03  | keyboard-milestone-task-nav        | nawiguje klawiaturą po milestone→task w wybranym kontekście         | S-01, F-03    | FR-005, FR-007, FR-008            | proposed |
@@ -62,8 +68,8 @@ kolejność czytania równoległych torów.
 
 | Stream | Theme                       | Chain                                          | Note                                                                          |
 | ------ | --------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------- |
-| A      | Rdzeń sync                  | `F-01` + `F-02` → `S-01` → `S-02`              | Client-agnostyczny; może ruszyć od razu, równolegle do decyzji o kliencie.    |
-| B      | Doświadczenie klawiaturowe  | `F-03` → `S-03` → `S-04` → `S-05` → `S-06`     | Cała połowa UI; czeka na OQ-1 (który klient). Zawiera gwiazdę `S-04`.          |
+| A      | Rdzeń sync (`core`)         | `F-01` + `F-02` → `S-01` → `S-02`              | Moduł `core`; logika niezależna od UI, woła ją się in-process (już nie po HTTP). |
+| B      | Doświadczenie klawiaturowe (`ui`) | `F-03` → `S-03` → `S-04` → `S-05` → `S-06` | Moduł `ui` (JavaFX). OQ-1 rozstrzygnięte: jeden klient JavaFX. Zawiera gwiazdę `S-04`. |
 | C      | Panel sync                  | `S-07`                                          | Dołącza do Stream A przy `S-02` i do Stream B przy `F-03`.                     |
 | D      | Dodatki (nice-to-have)      | `S-08` / `S-09`                                | Parkowane za must-have; `S-08` dołącza przy `S-04`/`S-06`, `S-09` przy `S-03`. |
 
@@ -72,8 +78,8 @@ kolejność czytania równoległych torów.
 Co jest już w kodzie na dzień `2026-06-20` (auto-zbadane + potwierdzone przez użytkownika).
 Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderują.
 
-- **Frontend:** partial — trzy szkielety klientów w `clients/` (web: Vite + React 19 + TS; flutter; desktop-java: JavaFX). Żaden bez kodu aplikacji; **wybór klienta odłożony**.
-- **Backend / API:** partial — Spring Boot 4.1.0 (web-mvc) w `server/`, tylko klasa `ClickupSimplifierApplication` + test. Zero kontrolerów, domeny, integracji ClickUp.
+- **Frontend:** (rewizja 2026-06-25) jeden klient — **JavaFX** (`clients/desktop-java`, docelowo moduł `ui`). Szkielety `clients/flutter` i `clients/web` **wypadają z zakresu MVP** (do usunięcia w refaktorze).
+- **Backend / API:** (rewizja 2026-06-25) `server/` (Spring Boot 4.1.0) staje się modułem **`core`**; **warstwa REST (`@RestController` + webmvc/Tomcat) jest usuwana** — `ui` woła serwisy `core` in-process. Zawiera już integrację ClickUp, persistencję (Flyway V1–V3), silnik sync (F-01/F-02/S-01).
 - **Data:** absent — brak sterownika DB, ORM i migracji w `server/pom.xml`. Lokalna kopia nie ma warstwy trwałości.
 - **Auth:** absent (zgodnie z projektem) — single-user, brak logowania; jedyny sekret to token API ClickUp, jego bezpieczne przechowywanie to sprawa downstream.
 - **Deploy / infra:** partial — self-host, CI na GitHub Actions (per `tech-stack.md`), skrypty buildów Javy w `scripts/`. Brak zdalnego targetu (aplikacja lokalna).
@@ -107,17 +113,17 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 - **Risk:** Inwestycja „głęboko" — warstwa danych to serce produktu i bramka NFR (~100 ms na całym workspace). Trzymana minimalnie: nie budujemy całego schematu z góry, tylko kontrakt pod pierwszy pull; S-01 od razu go przez realny pull ćwiczy.
 - **Status:** done
 
-### F-03: Wpięcie pierwszego klienta (JavaFX / desktop-java)
+### F-03: Monolit JavaFX — moduły `core` + `ui` i wpięcie powłoki (rewizja 2026-06-25)
 
-- **Outcome:** (fundament) klient JavaFX (`clients/desktop-java`) jest wpięty w rdzeń: działa kontrakt rdzeń↔klient (Java↔Java, kandydat na wywołanie in-process) i podstawowa, spójna nawigacja klawiaturą w pustej powłoce.
+- **Outcome:** (fundament) repo jest przebudowane w **monolit dwumodułowy Maven** (`core` + `ui` pod parent pom): `server/` → `core` (Spring jako DI in-process, **usunięta warstwa REST/webmvc**), `clients/desktop-java` → `ui` (JavaFX z `@SpringBootApplication` + `main()`, startuje kontekst Springa i woła serwisy `core` in-process), `clients/flutter` + `clients/web` usunięte. Działa podstawowa, spójna nawigacja klawiaturą w pustej powłoce.
 - **Change ID:** first-client-shell
 - **PRD refs:** FR-007, US-01
 - **Unlocks:** S-03, S-04 (gwiazda), S-05, S-06, S-07, S-08, S-09 — cała połowa UI.
 - **Prerequisites:** —
 - **Parallel with:** F-01, F-02
 - **Blockers:** —
-- **Unknowns:** —
-- **Risk:** Odblokowuje całą połowę UI łącznie z gwiazdą. Klient rozstrzygnięty (OQ-1): JavaFX pierwszy, potem Flutter, potem web. Szkielet już istnieje, więc to wpięcie + kontrakt, nie scaffolding od zera; ten sam język co rdzeń obniża koszt integracji.
+- **Unknowns:** Mechanika bootstrapu JavaFX ↔ kontekstu Spring (wzorzec FX-Spring: kto kogo startuje, lifecycle). Owner: downstream/plan. Block: no.
+- **Risk:** Odblokowuje całą połowę UI łącznie z gwiazdą. Klient rozstrzygnięty (rewizja 2026-06-25): **jeden klient JavaFX, monolit**. Obejmuje refaktor strukturalny (modularizacja + usunięcie REST), nie tylko wpięcie — ale ten sam język co `core` i istniejący kod F-01/F-02/S-01 (który przeżywa) obniżają koszt. **Uwaga:** F-01/F-02/S-01 są zarchiwizowane i niemodyfikowalne — refaktor ich kodu jedzie pod tym (nowym) change-id, nie edytuje archiwum.
 - **Status:** ready
 
 ## Slices
@@ -238,7 +244,7 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 | ---------- | ---------------------------------- | --------------------------------------------------- | --------------------- | ----- |
 | F-01       | clickup-token-and-connectivity     | Token ClickUp + uwierzytelniona łączność z API      | yes                   | Run `/10x-plan clickup-token-and-connectivity` |
 | F-02       | local-copy-persistence             | Minimalna lokalna warstwa trwałości kopii workspace | yes                   | Run `/10x-plan local-copy-persistence` |
-| F-03       | first-client-shell                 | Wpięcie klienta JavaFX (desktop-java) do rdzenia    | yes                   | OQ-1 rozstrzygnięte: JavaFX pierwszy. Run `/10x-plan first-client-shell` |
+| F-03       | first-client-shell                 | Monolit JavaFX: moduły `core`+`ui`, usunięcie REST, wpięcie powłoki | yes      | Rewizja 2026-06-25: monolit, jeden klient. Run `/10x-plan first-client-shell` |
 | S-01       | full-workspace-pull                | Pełny pull workspace do lokalnej kopii              | no                    | Czeka na F-01, F-02 |
 | S-02       | incremental-sync-and-manual-trigger| Sync przyrostowy + ręczne wyzwalanie zestawu        | no                    | Czeka na S-01 |
 | S-03       | keyboard-milestone-task-nav        | Nawigacja klawiaturą milestone→task w kontekście    | no                    | Czeka na S-01, F-03 |
@@ -251,7 +257,7 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 
 ## Open Roadmap Questions
 
-1. ✅ **ROZSTRZYGNIĘTE (2026-06-20): Który klient idzie jako pierwszy?** → **JavaFX (desktop-java) pierwszy, potem Flutter, potem web.** Odblokowało F-03 (oraz przez nie ścieżkę UI: S-03..S-09).
+1. ✅ **ZASTĄPIONE (rewizja 2026-06-25): Który klient idzie jako pierwszy?** → Pierwotnie (2026-06-20): JavaFX → Flutter → web. **Nadpisane decyzją użytkownika z 2026-06-25: rezygnujemy z wielu klientów i z wydzielonego serwera — MVP to monolit desktopowy pod JavaFX (jeden klient).** Brak serwera HTTP; rdzeń (`core`) wołany in-process przez `ui` (JavaFX); dwa moduły Maven `core` + `ui`; Spring zostaje jako DI in-process; Postgres zostaje. Granice dziedzin i warstwy wydzielone — powrót do wersji wielo-klientowej / klient-serwer możliwy później. Dotyczy F-03 oraz całej ścieżki UI (S-03..S-09).
 2. ✅ **ROZSTRZYGNIĘTE (2026-06-20): Zadania nieprzypisane do milestone?** → Brak osobnego węzła „bez milestone". Prezentacja zależy od zakończenia filtra nawigacji (context-first): filtr zakończony na **milestone** → tylko zadania tego milestone; filtr zakończony na **poziomie tasków kontekstu** (bez wybranego milestone) → wszystkie zadania kontekstu razem (przypisane + nieprzypisane), więc nieprzypisane są tam widoczne. Żaden widok nie miesza milestone'ów i zadań (FR-008 OK). Dotyczyło S-03, S-04.
 3. ✅ **ROZSTRZYGNIĘTE (2026-06-20): Mechanizm review zapisu zwrotnego?** → **Kolejka oczekujących zmian + selektywny przegląd** (model „staging": lokalne pending, panel z listą zmian, zatwierdź wszystko lub podzbiór, jeden push; konflikty pomijalne). Odblokowało S-05.
 4. ✅ **ROZSTRZYGNIĘTE (2026-06-20): Presety częstotliwości auto-sync?** → Wspólna pełna lista presetów: Ręcznie · 5 min · 15 min · 30 min · 1 h · 4 h · 12 h · 24 h, plus własna wartość (FR-019). Domyślne per zestaw: **Zadania → 5 min** (NFR „świeżość w ciągu minut"), **Podstawowe słowniki → 24 h**. Dotyczyło S-07.
@@ -265,6 +271,7 @@ Fundamenty poniżej zakładają obecność tych rzeczy i ich nie re-scaffolderuj
 - **Własne zestawy sync użytkownika** — Why parked: PRD §Non-Goals; katalog zestawów jest stały dla MVP (dwa nazwane).
 - **Tryb offline** — Why parked: PRD §Non-Goals; MVP wymaga żywego połączenia z ClickUp.
 - **OAuth** — Why parked: PRD §Non-Goals; dla MVP tylko osobisty token API.
+- **Wielu klientów (Flutter, web) + wydzielony serwer/kontrakt HTTP** — Why parked: rewizja 2026-06-25; MVP to monolit JavaFX. Granica `ui → core` zostawia drogę powrotu do wersji klient-serwer.
 
 ## Done
 

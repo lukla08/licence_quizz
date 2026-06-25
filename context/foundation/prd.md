@@ -4,7 +4,7 @@ version: 1
 status: draft
 created: 2026-06-06
 context_type: greenfield
-product_type: "desktop + web-app (multi-client; specific client choice deferred)"
+product_type: "desktop app (JavaFX monolith; multi-client + server split deferred post-MVP — rev. 2026-06-25)"
 target_scale:
   users: small
   qps: low
@@ -229,6 +229,11 @@ implementation concern.
   copy is for speed and a lean UI, not for disconnected use.
 - **OAuth** — only a personal API token is supported for MVP; full OAuth is out
   until/unless the tool goes multi-user.
+- **Multi-client + wydzielony serwer** (rev. 2026-06-25) — MVP to **monolit
+  desktopowy pod JavaFX**: jeden klient (Flutter i web wypadają), brak serwera
+  HTTP i kontraktu sieciowego (rdzeń wołany in-process). Granice dziedzin i
+  warstwy pozostają wydzielone (moduły `core` + `ui`), więc powrót do
+  rozbudowanej, wielo-klientowej / klient-serwer wersji jest możliwy później.
 
 > Not locked: sub-tasks / levels deeper than milestone→task were deliberately
 > NOT ruled out — the two-level model is the MVP presentation, but deeper nesting
