@@ -431,10 +431,10 @@ lokalnej kopii — S-03).
 
 #### Automated
 
-- [x] 1.1 Reaktor się skanuje (`mvn -f pom.xml validate`)
-- [x] 1.2 Pełna kompilacja + testy zielone (`mvn -f pom.xml test`)
-- [x] 1.3 Moduł `ui` (pusty) kompiluje się w reaktorze
-- [x] 1.4 Brak martwych ścieżek `server/` w `scripts/` i `.github/`
+- [x] 1.1 Reaktor się skanuje (`mvn -f pom.xml validate`) — 7b713d1
+- [x] 1.2 Pełna kompilacja + testy zielone (`mvn -f pom.xml test`) — 7b713d1
+- [x] 1.3 Moduł `ui` (pusty) kompiluje się w reaktorze — 7b713d1
+- [x] 1.4 Brak martwych ścieżek `server/` w `scripts/` i `.github/` — 7b713d1
 
 #### Manual
 
